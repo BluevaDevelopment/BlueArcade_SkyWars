@@ -1,0 +1,17 @@
+name: SkyWars
+id: skywars
+version: 1.0.0
+type: MINIGAME
+api-version: 1.0
+main: net.blueva.arcade.modules.skywars.SkyWarsModule
+
+authors:
+  - Blueva
+  - Whiron
+
+description: "Loot, fight, and be the last team standing."
+
+commands:
+  skywarsvote:
+    description: "SkyWars voting command"
+    usage: "/skywarsvote [menu|vote] [args]"

@@ -1,0 +1,33 @@
+file_version: 1
+type: SIMPLE
+menuName: '<yellow>Vote time</yellow>'
+
+content:
+  - '<gray>Pick the time of day.</gray>'
+
+buttons:
+  day:
+    text: '<yellow>Day</yellow> <gray>({votes_time_day} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_sunflower.png'
+    actions:
+      - 'MODULE;skywars;vote time day'
+  sunset:
+    text: '<gold>Sunset</gold> <gray>({votes_time_sunset} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_orange_dye.png'
+    actions:
+      - 'MODULE;skywars;vote time sunset'
+  night:
+    text: '<blue>Night</blue> <gray>({votes_time_night} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_end_rod.png'
+    actions:
+      - 'MODULE;skywars;vote time night'
+  sunrise:
+    text: '<yellow>Sunrise</yellow> <gray>({votes_time_sunrise} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_yellow_dye.png'
+    actions:
+      - 'MODULE;skywars;vote time sunrise'
+  back:
+    text: '<gray>Back</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_arrow.png'
+    actions:
+      - 'OPEN;skywars_vote_main'

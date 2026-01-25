@@ -1,0 +1,280 @@
+file_version: 1
+
+default_kit: noob
+
+kits:
+  order:
+    - noob
+    - leather
+    - archer
+    - swordsman
+    - tank
+    - assassin
+    - notch
+    - ninja
+    - sniper
+    - builder
+    - food
+    - alchemist
+    - enchanter
+    - enderman
+    - explosive
+    - feller
+    - flash
+    - iceman
+    - knockback
+    - pyromaniac
+    - troll
+  noob:
+    name: "Noob"
+    icon: WOODEN_SWORD
+    price: 0
+    enabled: true
+    default_unlocked: true
+    description:
+      - "<gray>Basic wooden tools for a simple start.</gray>"
+    items:
+      - "WOODEN_SWORD:1"
+      - "WOODEN_SHOVEL:1"
+      - "WOODEN_PICKAXE:1"
+      - "WOODEN_AXE:1"
+      - "WOODEN_HOE:1"
+  leather:
+    name: "Leather"
+    icon: LEATHER_CHESTPLATE
+    price: 50
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Light armor with a simple blade.</gray>"
+    items:
+      - "WOODEN_SWORD:1"
+      - "APPLE:1"
+      - "LEATHER_BOOTS:1:36"
+      - "LEATHER_LEGGINGS:1:37"
+      - "LEATHER_CHESTPLATE:1:38"
+      - "LEATHER_HELMET:1:39"
+  archer:
+    name: "Archer"
+    icon: BOW
+    price: 100
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Start with ranged pressure and boots.</gray>"
+    items:
+      - "BOW:1"
+      - "ARROW:16"
+      - "LEATHER_BOOTS:1:36"
+  swordsman:
+    name: "Swordsman"
+    icon: IRON_SWORD
+    price: 150
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Reliable sword with chain protection.</gray>"
+    items:
+      - "IRON_SWORD:1"
+      - "CHAINMAIL_BOOTS:1:36"
+      - "CHAINMAIL_CHESTPLATE:1:38"
+  tank:
+    name: "Tank"
+    icon: IRON_CHESTPLATE
+    price: 300
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Heavy armor to soak early hits.</gray>"
+    items:
+      - "IRON_BOOTS:1:36"
+      - "IRON_LEGGINGS:1:37"
+      - "IRON_CHESTPLATE:1:38"
+      - "IRON_HELMET:1:39"
+  assassin:
+    name: "Assassin"
+    icon: DIAMOND_SWORD
+    price: 350
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Strike fast with a diamond blade.</gray>"
+    items:
+      - "DIAMOND_SWORD:1"
+      - "GOLDEN_APPLE:2"
+      - "IRON_BOOTS:1:36"
+  notch:
+    name: "Notch"
+    icon: GOLDEN_APPLE
+    price: 200
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Golden apple for emergency healing.</gray>"
+    items:
+      - "GOLDEN_APPLE:1"
+  ninja:
+    name: "Ninja"
+    icon: DIAMOND_SWORD
+    price: 300
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Potions and a sharp blade for stealth.</gray>"
+    items:
+      - "POTION:3"
+      - "DIAMOND_SWORD:1"
+      - "LEATHER_HELMET:1:39"
+  sniper:
+    name: "Sniper"
+    icon: BOW
+    price: 200
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Bow focus with a protective helmet.</gray>"
+    items:
+      - "BOW:1"
+      - "ARROW:16"
+      - "IRON_HELMET:1:39"
+  builder:
+    name: "Builder"
+    icon: BRICKS
+    price: 80
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Extra building blocks to bridge fast.</gray>"
+    items:
+      - "BRICKS:64"
+  food:
+    name: "Food"
+    icon: BREAD
+    price: 60
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Stock up on food before the fight.</gray>"
+    items:
+      - "RABBIT_STEW:5"
+      - "MUSHROOM_STEW:5"
+      - "BREAD:5"
+  alchemist:
+    name: "Alchemist"
+    icon: BREWING_STAND
+    price: 200
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Brewing tools for potion play.</gray>"
+    items:
+      - "BREWING_STAND:1"
+      - "NETHER_WART:2"
+      - "SUGAR_CANE:1"
+      - "GLASS_BOTTLE:4"
+  enchanter:
+    name: "Enchanter"
+    icon: ENCHANTING_TABLE
+    price: 220
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Enchant and dye your gear quickly.</gray>"
+    items:
+      - "ENCHANTING_TABLE:1"
+      - "EXPERIENCE_BOTTLE:16"
+      - "INK_SAC:16"
+  enderman:
+    name: "Enderman"
+    icon: ENDER_PEARL
+    price: 200
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Teleportation pearls for bold plays.</gray>"
+    items:
+      - "IRON_SWORD:1"
+      - "ENDER_PEARL:3"
+      - "CHAINMAIL_LEGGINGS:1:37"
+  explosive:
+    name: "Explosive"
+    icon: CREEPER_SPAWN_EGG
+    price: 260
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Spawn explosive threats with armor.</gray>"
+    items:
+      - "CREEPER_SPAWN_EGG:3"
+      - "CHAINMAIL_CHESTPLATE:1:38"
+  feller:
+    name: "Feller"
+    icon: STONE_AXE
+    price: 180
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Chop fast and build sturdy bridges.</gray>"
+    items:
+      - "STONE_AXE:1"
+      - "OAK_LOG:12"
+      - "DIAMOND_BOOTS:1:36"
+  flash:
+    name: "Flash"
+    icon: GOLDEN_BOOTS
+    price: 180
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Quick movement and a golden blade.</gray>"
+    items:
+      - "GOLDEN_SWORD:1"
+      - "POTION:1"
+      - "GOLDEN_BOOTS:1:36"
+  iceman:
+    name: "Ice Man"
+    icon: ICE
+    price: 120
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Snowballs and ice for control.</gray>"
+    items:
+      - "SNOWBALL:16"
+      - "ICE:12"
+  knockback:
+    name: "Knockback"
+    icon: STICK
+    price: 120
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Send opponents flying off the island.</gray>"
+    items:
+      - "STICK:1"
+  pyromaniac:
+    name: "Pyromaniac"
+    icon: FLINT_AND_STEEL
+    price: 200
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Set the arena on fire with charges.</gray>"
+    items:
+      - "FLINT_AND_STEEL:1"
+      - "FIRE_CHARGE:2"
+      - "CHAINMAIL_LEGGINGS:1:37"
+  troll:
+    name: "Troll"
+    icon: PISTON
+    price: 250
+    enabled: true
+    default_unlocked: false
+    description:
+      - "<gray>Redstone tricks to ruin bridges.</gray>"
+    items:
+      - "PISTON:4"
+      - "STICKY_PISTON:4"
+      - "REDSTONE:16"
+      - "REPEATER:2"
+      - "REDSTONE_TORCH:10"

@@ -1,0 +1,159 @@
+# SkyWars Module - English (UK)
+# Only SkyWars-specific content
+
+file_version: 2
+display_name: "SkyWars"
+
+description:
+  - "<dark_gray><strikethrough>----------------------------------------------</strikethrough></dark_gray>"
+  - "<green>Game</green> <gray>-</gray> <yellow><bold>SkyWars</bold></yellow>"
+  - " "
+  - "<white>Description:</white>"
+  - "<gray>Spawn on floating islands, loot chests, and outlast rivals.</gray>"
+  - "<gray>Work with your squad to be the last team standing.</gray>"
+  - " "
+  - "<dark_gray><strikethrough>----------------------------------------------</strikethrough></dark_gray>"
+
+# Vote menu
+vote_menu:
+  name: "<green>SkyWars</green>"
+  lore:
+    - "<gray>Start inside a glass cage above the islands.</gray>"
+    - "<gray>Loot, fight, and survive the late-game storm.</gray>"
+    - ""
+    - "<white>{votes}</white> <gray>votes.</gray>"
+
+votes:
+  labels:
+    categories:
+      chests: "Chest loot"
+      hearts: "Hearts"
+      time: "Time"
+      weather: "Weather"
+    options:
+      chests:
+        basic: "Basic"
+        normal: "Normal"
+        overpowered: "Overpowered"
+      hearts:
+        "10": "10 hearts"
+        "20": "20 hearts"
+        "30": "30 hearts"
+      time:
+        day: "Day"
+        night: "Night"
+        sunset: "Sunset"
+        sunrise: "Sunrise"
+      weather:
+        sunny: "Sunny"
+        rainy: "Rainy"
+  messages:
+    broadcast: "<yellow>{player}</yellow> <gray>picked</gray> <aqua>{category}</aqua> <dark_gray>→</dark_gray> <white>{option}</white>"
+    selected:
+      sources:
+        popular: "by popular vote"
+        default: "by default"
+      chests: "<gray>Selected</gray> <gold>{option}</gold> <gray>chest loot {source}.</gray>"
+      hearts: "<gray>Selected</gray> <red>{option}</red> <gray>{source}.</gray>"
+      time: "<gray>Selected</gray> <yellow>{option}</yellow> <gray>time {source}.</gray>"
+      weather: "<gray>Selected</gray> <blue>{option}</blue> <gray>weather {source}.</gray>"
+    invalid: "<red>That vote option is not available.</red>"
+    not_available: "<red>You can only vote while waiting for the game to start.</red>"
+    no_permission: "<red>You do not have permission to vote for</red> <yellow>{option}</yellow><red>.</red>"
+
+stats:
+  labels:
+    kills: "Eliminations"
+    games_played: "SkyWars games played"
+    wins: "SkyWars wins"
+    chests_looted: "Chests looted"
+    storm_damage_taken: "Storm damage taken"
+
+messages:
+  eliminated: "<red>You are out! You are now a spectator.</red>"
+  out_of_bounds: "<yellow>You cannot leave the arena.</yellow>"
+  events:
+    chest_refill: "<aqua>Chests have been refilled.</aqua>"
+    storm_started: "<red>The final storm has begun.</red>"
+  storm:
+    incoming: "<aqua>The storm will start moving in <white>{seconds}</white> seconds.</aqua>"
+    moving: "<red>The storm is closing in!</red>"
+  deaths:
+    killed_by_player:
+      - "<dark_red>✘</dark_red> <red>{victim}</red> <gray>was eliminated by</gray> <yellow>{killer}</yellow><gray>.</gray>"
+      - "<dark_red>✘</dark_red> <yellow>{killer}</yellow> <gray>outplayed</gray> <red>{victim}</red><gray>.</gray>"
+      - "<dark_red>✘</dark_red> <red>{victim}</red> <gray>fell to</gray> <yellow>{killer}</yellow><gray>'s attack.</gray>"
+      - "<dark_red>✘</dark_red> <yellow>{killer}</yellow> <gray>took down</gray> <red>{victim}</red><gray>.</gray>"
+    generic:
+      - "<dark_red>✘</dark_red> <red>{victim}</red> <gray>couldn't survive the chaos.</gray>"
+      - "<dark_red>✘</dark_red> <red>{victim}</red> <gray>was lost in the storm.</gray>"
+      - "<dark_red>✘</dark_red> <red>{victim}</red> <gray>was eliminated.</gray>"
+
+titles:
+  you_died:
+    title: "<red><bold>YOU DIED</bold></red>"
+    subtitle: "<gray>Back to the lobby.</gray>"
+  classified:
+    title: "<yellow><bold>ELIMINATED</bold></yellow>"
+    subtitle: "<gray>Your squad continues without you.</gray>"
+
+scoreboard:
+  solo_team_label: "Solo"
+  event:
+    none: "None"
+    none_time: "-"
+    now: "Now"
+  storm_status:
+    safe: "<green>Safe</green>"
+    unsafe: "<red>In Storm</red>"
+  storm_phase:
+    waiting: "<gray>Waiting</gray>"
+    final: "<red>Final</red>"
+  default:
+    title: "<bold><gradient:aqua:light_purple>Blue Arcade</gradient></bold>"
+    lines:
+      - ""
+      - "<white>Arena:</white> <aqua>{arena}</aqua>"
+      - "<white>Game:</white> <aqua>SkyWars</aqua>"
+      - ""
+      - "<white>Team:</white> <yellow>{team}</yellow>"
+      - "<white>Teams Alive:</white> <green>{alive_teams}</green>"
+      - "<white>Players Alive:</white> <green>{alive}</green>"
+      - "<white>Your Kills:</white> <red>{kills}</red>"
+      - ""
+      - "<white>Next Event:</white> <aqua>{next_event}</aqua>"
+      - "<white>Starts In:</white> <aqua>{next_event_time}</aqua>"
+      - ""
+      - "<yellow>www.blueva.net</yellow>"
+  solo:
+    title: "<bold><gradient:aqua:light_purple>Blue Arcade</gradient></bold>"
+    lines:
+      - ""
+      - "<white>Arena:</white> <aqua>{arena}</aqua>"
+      - "<white>Game:</white> <aqua>SkyWars</aqua>"
+      - ""
+      - "<white>Players Alive:</white> <green>{alive}</green>"
+      - "<white>Your Kills:</white> <red>{kills}</red>"
+      - ""
+      - "<white>Next Event:</white> <aqua>{next_event}</aqua>"
+      - "<white>Starts In:</white> <aqua>{next_event_time}</aqua>"
+      - ""
+      - "<yellow>www.blueva.net</yellow>"
+
+setup_messages:
+  team:
+    usage: "<red>Usage:</red> <yellow>/baa game <id> skywars team <count|size> <value></yellow>"
+    success: "<green>Team {setting} set to {value} for {game} in arena {arena_id}.</green>"
+    invalid_limit: "<red>Team configuration exceeds arena max players ({max_players}).</red>"
+    invalid_value: "<red>Team {setting} must be greater than 0.</red>"
+    invalid_count: "<red>Team count must be at least 2.</red>"
+  search_chests:
+    missing_bounds: "<red>Game bounds are not configured yet.</red>"
+    start: "<yellow>Searching for chests... ({blocks} blocks to scan)</yellow>"
+    action_bar: "<gold>Searching chests</gold> <gray>(Time elapsed: {time})</gray> <dark_gray>•</dark_gray> <green>{found}</green>"
+    complete: "<green>Chest search completed.</green> <yellow>Found {found} chests in {time}.</yellow>"
+  region:
+    usage: "<red>Usage:</red> <yellow>/baa game <id> skywars region <set|clear></yellow>"
+    must_use_stick: "<red>Select two corners with the setup tool first.</red>"
+    set: "<green>Regeneration region saved.</green> <gray>Blocks:</gray> <white>{blocks}</white> <gray>({x}x{y}x{z})</gray>"
+    cleared: "<yellow>Regeneration region cleared.</yellow>"

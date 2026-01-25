@@ -1,0 +1,23 @@
+file_version: 1
+type: SIMPLE
+menuName: '<blue>Vote weather</blue>'
+
+content:
+  - '<gray>Choose the match weather.</gray>'
+
+buttons:
+  sunny:
+    text: '<yellow>Sunny</yellow> <gray>({votes_weather_sunny} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_sunflower.png'
+    actions:
+      - 'MODULE;skywars;vote weather sunny'
+  rainy:
+    text: '<blue>Rainy</blue> <gray>({votes_weather_rainy} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_water_bucket.png'
+    actions:
+      - 'MODULE;skywars;vote weather rainy'
+  back:
+    text: '<gray>Back</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_arrow.png'
+    actions:
+      - 'OPEN;skywars_vote_main'

@@ -1,0 +1,28 @@
+file_version: 1
+type: SIMPLE
+menuName: '<red>Vote hearts</red>'
+
+content:
+  - '<gray>Select the max hearts for the match.</gray>'
+
+buttons:
+  hearts_10:
+    text: '<white>10 hearts</white> <gray>({votes_hearts_10} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_redstone.png'
+    actions:
+      - 'MODULE;skywars;vote hearts 10'
+  hearts_20:
+    text: '<yellow>20 hearts</yellow> <gray>({votes_hearts_20} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_golden_apple.png'
+    actions:
+      - 'MODULE;skywars;vote hearts 20'
+  hearts_30:
+    text: '<light_purple>30 hearts</light_purple> <gray>({votes_hearts_30} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_enchanted_golden_apple.png'
+    actions:
+      - 'MODULE;skywars;vote hearts 30'
+  back:
+    text: '<gray>Back</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_arrow.png'
+    actions:
+      - 'OPEN;skywars_vote_main'

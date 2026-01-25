@@ -1,0 +1,75 @@
+file_version: 1
+menuName: '<aqua>SkyWars vote settings</aqua>'
+menuSize: 27
+type: CHEST
+
+items:
+  info:
+    slot: 4
+    name: '<yellow>Match settings</yellow>'
+    itemStack:
+      material: BOOK
+      amount: 1
+    lore:
+      - '<gray>Vote for the match setup before it starts.</gray>'
+      - '<gray>Your votes are shared with everyone.</gray>'
+    actions: []
+
+  chests:
+    slot: 10
+    name: '<gold>Chest loot</gold>'
+    itemStack:
+      material: CHEST
+      amount: 1
+    lore:
+      - '<gray>Your vote:</gray> <white>{player_vote_chests}</white>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'OPEN;skywars_vote_chests'
+
+  hearts:
+    slot: 12
+    name: '<red>Hearts</red>'
+    itemStack:
+      material: APPLE
+      amount: 1
+    lore:
+      - '<gray>Your vote:</gray> <white>{player_vote_hearts}</white>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'OPEN;skywars_vote_hearts'
+
+  time:
+    slot: 14
+    name: '<yellow>Time of day</yellow>'
+    itemStack:
+      material: CLOCK
+      amount: 1
+    lore:
+      - '<gray>Your vote:</gray> <white>{player_vote_time}</white>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'OPEN;skywars_vote_time'
+
+  weather:
+    slot: 16
+    name: '<blue>Weather</blue>'
+    itemStack:
+      material: WATER_BUCKET
+      amount: 1
+    lore:
+      - '<gray>Your vote:</gray> <white>{player_vote_weather}</white>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'OPEN;skywars_vote_weather'
+
+  close:
+    slot: 22
+    name: '<red>Close</red>'
+    itemStack:
+      material: BARRIER
+      amount: 1
+    lore:
+      - '<gray>Return to the lobby.</gray>'
+    actions:
+      - 'CLOSE'

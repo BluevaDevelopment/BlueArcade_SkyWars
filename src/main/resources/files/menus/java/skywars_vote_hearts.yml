@@ -1,0 +1,55 @@
+file_version: 1
+menuName: '<red>Vote hearts</red>'
+menuSize: 27
+type: CHEST
+
+items:
+  hearts_10:
+    slot: 10
+    name: '<white>10 hearts</white>'
+    itemStack:
+      material: REDSTONE
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_hearts_10}</white>'
+      - '<gray>Classic SkyWars health.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote hearts 10'
+
+  hearts_20:
+    slot: 13
+    name: '<yellow>20 hearts</yellow>'
+    itemStack:
+      material: GOLDEN_APPLE
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_hearts_20}</white>'
+      - '<gray>Longer fights and more clutch plays.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote hearts 20'
+
+  hearts_30:
+    slot: 16
+    name: '<light_purple>30 hearts</light_purple>'
+    itemStack:
+      material: ENCHANTED_GOLDEN_APPLE
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_hearts_30}</white>'
+      - '<gray>Extra tanky battles.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote hearts 30'
+
+  back:
+    slot: 22
+    name: '<gray>Back</gray>'
+    itemStack:
+      material: ARROW
+      amount: 1
+    lore:
+      - '<gray>Return to settings.</gray>'
+    actions:
+      - 'OPEN;skywars_vote_main'

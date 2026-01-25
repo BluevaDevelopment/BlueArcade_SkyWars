@@ -1,0 +1,34 @@
+file_version: 1
+type: SIMPLE
+menuName: '<aqua>SkyWars vote settings</aqua>'
+
+content:
+  - '<gray>Vote for the match setup before it starts.</gray>'
+  - '<gray>Your votes are shared with everyone.</gray>'
+
+buttons:
+  chests:
+    text: '<gold>Chest loot</gold>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_chest.png'
+    actions:
+      - 'OPEN;skywars_vote_chests'
+  hearts:
+    text: '<red>Hearts</red>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_apple.png'
+    actions:
+      - 'OPEN;skywars_vote_hearts'
+  time:
+    text: '<yellow>Time</yellow>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_clock.png'
+    actions:
+      - 'OPEN;skywars_vote_time'
+  weather:
+    text: '<blue>Weather</blue>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_water_bucket.png'
+    actions:
+      - 'OPEN;skywars_vote_weather'
+  close:
+    text: '<red>Close</red>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_barrier.png'
+    actions:
+      - 'CLOSE'

@@ -1,0 +1,55 @@
+file_version: 1
+menuName: '<gold>Vote chest loot</gold>'
+menuSize: 27
+type: CHEST
+
+items:
+  basic:
+    slot: 10
+    name: '<white>Basic chests</white>'
+    itemStack:
+      material: CHEST
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_chests_basic}</white>'
+      - '<gray>Less gear, more survival.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote chests basic'
+
+  normal:
+    slot: 13
+    name: '<yellow>Normal chests</yellow>'
+    itemStack:
+      material: TRAPPED_CHEST
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_chests_normal}</white>'
+      - '<gray>Balanced loot tables.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote chests normal'
+
+  overpowered:
+    slot: 16
+    name: '<red>Overpowered chests</red>'
+    itemStack:
+      material: ENDER_CHEST
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_chests_overpowered}</white>'
+      - '<gray>More diamond gear and bonuses.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote chests overpowered'
+
+  back:
+    slot: 22
+    name: '<gray>Back</gray>'
+    itemStack:
+      material: ARROW
+      amount: 1
+    lore:
+      - '<gray>Return to settings.</gray>'
+    actions:
+      - 'OPEN;skywars_vote_main'

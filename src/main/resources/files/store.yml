@@ -1,0 +1,67 @@
+file_version: 1
+
+categories:
+  - root
+  - kits
+  - cages
+
+category_settings:
+  root:
+    id: skywars_store
+    name: "SkyWars"
+    icon: DIAMOND_SWORD
+    description:
+      - "<gray>SkyWars cosmetics and kit loadouts.</gray>"
+      - "<gray>Unlock items once and use them in every arena.</gray>"
+      - "<gray> </gray>"
+      - "<yellow>Select a category below to begin.</yellow>"
+    enabled: true
+    type: group
+    selection_enabled: false
+    sort_order: 10
+    items:
+      order: []
+  kits:
+    id: skywars_kits
+    name: "Kits"
+    icon: CHEST
+    description:
+      - "<gray>Choose a kit to start the match.</gray>"
+      - "<gray>Each kit includes unique items.</gray>"
+      - "<gray> </gray>"
+      - "<yellow>Pick a kit that fits your style.</yellow>"
+    enabled: true
+    type: selection
+    parent_id: skywars_store
+    selection_enabled: true
+    random_selection_enabled: true
+    random_item:
+      display_name: "Random Kit"
+      icon: ENDER_CHEST
+      description:
+        - "<gray>Select a random unlocked kit.</gray>"
+    sort_order: 20
+    items:
+      order: []
+  cages:
+    id: skywars_cages
+    name: "Cage Colors"
+    icon: GLASS
+    description:
+      - "<gray>Customize the spawn cage appearance.</gray>"
+      - "<gray>Glass and block variants are available.</gray>"
+      - "<gray> </gray>"
+      - "<yellow>Pick your favorite cage.</yellow>"
+    enabled: true
+    type: selection
+    parent_id: skywars_store
+    selection_enabled: true
+    random_selection_enabled: true
+    random_item:
+      display_name: "Random Cage"
+      icon: ENDER_CHEST
+      description:
+        - "<gray>Select a random unlocked cage.</gray>"
+    sort_order: 30
+    items:
+      order: []

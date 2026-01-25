@@ -1,0 +1,68 @@
+file_version: 1
+menuName: '<yellow>Vote time</yellow>'
+menuSize: 27
+type: CHEST
+
+items:
+  day:
+    slot: 10
+    name: '<yellow>Day</yellow>'
+    itemStack:
+      material: SUNFLOWER
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_time_day}</white>'
+      - '<gray>Clear daylight visibility.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote time day'
+
+  sunset:
+    slot: 12
+    name: '<gold>Sunset</gold>'
+    itemStack:
+      material: ORANGE_DYE
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_time_sunset}</white>'
+      - '<gray>Warm evening lighting.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote time sunset'
+
+  night:
+    slot: 14
+    name: '<blue>Night</blue>'
+    itemStack:
+      material: END_ROD
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_time_night}</white>'
+      - '<gray>Dark, tense battles.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote time night'
+
+  sunrise:
+    slot: 16
+    name: '<yellow>Sunrise</yellow>'
+    itemStack:
+      material: YELLOW_DYE
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_time_sunrise}</white>'
+      - '<gray>Early morning glow.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote time sunrise'
+
+  back:
+    slot: 22
+    name: '<gray>Back</gray>'
+    itemStack:
+      material: ARROW
+      amount: 1
+    lore:
+      - '<gray>Return to settings.</gray>'
+    actions:
+      - 'OPEN;skywars_vote_main'

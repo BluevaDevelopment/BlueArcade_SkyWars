@@ -1,0 +1,28 @@
+file_version: 1
+type: SIMPLE
+menuName: '<gold>Vote chest loot</gold>'
+
+content:
+  - '<gray>Choose the chest loot style.</gray>'
+
+buttons:
+  basic:
+    text: '<white>Basic</white> <gray>({votes_chests_basic} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_chest.png'
+    actions:
+      - 'MODULE;skywars;vote chests basic'
+  normal:
+    text: '<yellow>Normal</yellow> <gray>({votes_chests_normal} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_trapped_chest.png'
+    actions:
+      - 'MODULE;skywars;vote chests normal'
+  overpowered:
+    text: '<red>Overpowered</red> <gray>({votes_chests_overpowered} votes)</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_ender_chest.png'
+    actions:
+      - 'MODULE;skywars;vote chests overpowered'
+  back:
+    text: '<gray>Back</gray>'
+    image: 'https://blueva.net/api/menu/items/1_21_10/minecraft_arrow.png'
+    actions:
+      - 'OPEN;skywars_vote_main'

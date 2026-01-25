@@ -1,0 +1,216 @@
+# SkyWars Module Settings
+
+file_version: 2
+
+# Visual representation in menus
+menus:
+  vote:
+    item: BOW
+
+waiting_items:
+  vote_settings:
+    enabled: true
+    material: NAME_TAG
+    slot: 1
+    display_name: "<aqua>Vote match settings</aqua>"
+    lore:
+      - "<gray>Choose chest loot, hearts, time, and weather.</gray>"
+
+votes:
+  defaults:
+    chests: normal
+    hearts: "10"
+    time: day
+    weather: sunny
+
+game:
+  # Set to 0 to disable a time limit
+  time_limit_seconds: 0
+
+spawn_protection:
+  # Seconds of fall damage immunity after the game starts
+  fall_damage_seconds: 5
+
+combat:
+  kill_regeneration:
+    # Health restored on eliminations (set to 0 to disable)
+    health: 6.0
+
+# Game items (optional)
+items:
+  # Items to give players on game start
+  # Format: MATERIAL:AMOUNT:SLOT
+  starting_items: []
+
+# Potion effects (optional)
+effects:
+  # Effects to give players during the game
+  # Format: EFFECT_TYPE:DURATION_TICKS:AMPLIFIER
+  starting_effects:
+    - "DAMAGE_RESISTANCE:60:1"
+
+events:
+  # Format: "SECONDS_AFTER_START:TYPE:DISPLAY_NAME"
+  schedule:
+    - "180:CHEST_REFILL:Chest Refill"
+    - "300:STORM:Final Storm"
+
+storm:
+  enabled: true
+  # Final radius (blocks) after the storm finishes shrinking
+  final_radius_blocks: 5
+  # Time in seconds to shrink from arena bounds to final radius
+  shrink_duration_seconds: 120
+  # Damage dealt per second while outside the storm border
+  damage_per_second: 2.0
+  lightning:
+    enabled: true
+    interval_seconds: 3
+    strikes_per_wave: 3
+
+loot:
+  refill:
+    enabled: true
+    interval_seconds: 0
+    prefill_on_start: true
+    check_interval_ticks: 20
+  chests:
+    allow_untracked: false
+    marker_interval_ticks: 40
+    # Per-item weights for loot selection.
+    # Format per entry: MATERIAL:AMOUNT:WEIGHT or MATERIAL:MIN_AMOUNT:MAX_AMOUNT:WEIGHT
+    # Optional enchantments: append |ENCHANT:LEVEL,ENCHANT:LEVEL (example: DIAMOND_SWORD:1:20|SHARPNESS:2,UNBREAKING:1)
+    tiers:
+      basic:
+        item_count:
+          min: 5
+          max: 9
+        items:
+          - "OAK_PLANKS:16:60"
+          - "COBBLESTONE:16:60"
+          - "STONE:16:45"
+          - "END_STONE:16:30"
+          - "DIRT:16:25"
+          - "BREAD:4:50"
+          - "APPLE:4:45"
+          - "BAKED_POTATO:4:45"
+          - "COOKED_CHICKEN:3:40"
+          - "WATER_BUCKET:1:25"
+          - "SNOWBALL:4:40"
+          - "EGG:4:40"
+          - "BOW:1:25"
+          - "ARROW:8:35"
+          - "LEATHER_BOOTS:1:35"
+          - "LEATHER_CHESTPLATE:1:35"
+          - "LEATHER_HELMET:1:35"
+          - "LEATHER_LEGGINGS:1:35"
+          - "WOODEN_SHOVEL:1:35"
+          - "WOODEN_PICKAXE:1:35"
+          - "WOODEN_AXE:1:35"
+          - "WOODEN_SWORD:1:35"
+          - "STONE_PICKAXE:1:25"
+          - "STONE_SWORD:1:25"
+          - "STONE_AXE:1:25"
+          - "STONE_SHOVEL:1:25"
+      normal:
+        item_count:
+          min: 6
+          max: 12
+        items:
+          - "OAK_PLANKS:16:60"
+          - "COBBLESTONE:16:60"
+          - "STONE:16:45"
+          - "ANDESITE:16:35"
+          - "END_STONE:16:35"
+          - "OAK_LOG:8:25"
+          - "BREAD:4:45"
+          - "APPLE:4:40"
+          - "BAKED_POTATO:4:40"
+          - "COOKED_BEEF:3:35"
+          - "COOKED_CHICKEN:3:35"
+          - "WATER_BUCKET:1:35"
+          - "LAVA_BUCKET:1:30"
+          - "SNOWBALL:4:40"
+          - "EGG:4:40"
+          - "BOW:1:35"
+          - "ARROW:12:40"
+          - "LEATHER_BOOTS:1:30"
+          - "LEATHER_CHESTPLATE:1:30"
+          - "LEATHER_HELMET:1:30"
+          - "LEATHER_LEGGINGS:1:30"
+          - "WOODEN_SHOVEL:1:30"
+          - "WOODEN_PICKAXE:1:30"
+          - "WOODEN_AXE:1:30"
+          - "WOODEN_SWORD:1:30"
+          - "STONE_PICKAXE:1:30"
+          - "STONE_SWORD:1:30"
+          - "STONE_AXE:1:30"
+          - "STONE_SHOVEL:1:30"
+          - "GOLDEN_BOOTS:1:25"
+          - "GOLDEN_LEGGINGS:1:25"
+          - "GOLDEN_HELMET:1:25"
+          - "GOLDEN_CHESTPLATE:1:25"
+          - "ENDER_PEARL:1:25"
+          - "EXPERIENCE_BOTTLE:1:25"
+          - "IRON_PICKAXE:1:25"
+          - "IRON_SHOVEL:1:25"
+          - "IRON_BOOTS:1:20"
+          - "IRON_HELMET:1:20"
+          - "IRON_LEGGINGS:1:20"
+          - "IRON_CHESTPLATE:1:20"
+          - "GOLDEN_APPLE:1:20"
+          - "IRON_AXE:1:20"
+          - "IRON_SWORD:1:20"
+          - "ENDER_PEARL:2:15"
+          - "DIAMOND_PICKAXE:1:12"
+          - "DIAMOND_SHOVEL:1:12"
+          - "DIAMOND_CHESTPLATE:1:7"
+          - "DIAMOND_BOOTS:1:7"
+          - "DIAMOND_LEGGINGS:1:7"
+          - "DIAMOND_HELMET:1:7"
+          - "DIAMOND_SWORD:1:7"
+          - "DIAMOND_AXE:1:7"
+          - "DIAMOND_SWORD:1:6|SHARPNESS:1"
+          - "DIAMOND_AXE:1:6|SHARPNESS:1"
+          - "DIAMOND_CHESTPLATE:1:5|PROTECTION:1"
+          - "DIAMOND_HELMET:1:5|PROTECTION:1"
+          - "DIAMOND_BOOTS:1:5|PROTECTION:1"
+      overpowered:
+        item_count:
+          min: 7
+          max: 14
+        items:
+          - "OAK_PLANKS:32:60"
+          - "COBBLESTONE:32:60"
+          - "END_STONE:32:45"
+          - "STONE_BRICKS:32:40"
+          - "OBSIDIAN:4:25"
+          - "WATER_BUCKET:1:35"
+          - "LAVA_BUCKET:1:35"
+          - "ENDER_PEARL:2:40"
+          - "BOW:1:35|POWER:2,UNBREAKING:1"
+          - "ARROW:16:45"
+          - "EXPERIENCE_BOTTLE:8:40"
+          - "ENCHANTED_BOOK:1:25"
+          - "GOLDEN_APPLE:2:35"
+          - "ENCHANTED_GOLDEN_APPLE:1:5"
+          - "IRON_PICKAXE:1:28|EFFICIENCY:2,UNBREAKING:1"
+          - "IRON_SWORD:1:28|SHARPNESS:2,UNBREAKING:1"
+          - "IRON_AXE:1:28|SHARPNESS:2,UNBREAKING:1"
+          - "DIAMOND_PICKAXE:1:24|EFFICIENCY:2,UNBREAKING:2"
+          - "DIAMOND_SHOVEL:1:24|EFFICIENCY:2,UNBREAKING:2"
+          - "DIAMOND_SWORD:1:24|SHARPNESS:3,UNBREAKING:2"
+          - "DIAMOND_AXE:1:24|SHARPNESS:3,UNBREAKING:2"
+          - "DIAMOND_BOOTS:1:22|PROTECTION:2,FEATHER_FALLING:2"
+          - "DIAMOND_LEGGINGS:1:22|PROTECTION:2,UNBREAKING:2"
+          - "DIAMOND_HELMET:1:22|PROTECTION:2,UNBREAKING:2"
+          - "DIAMOND_CHESTPLATE:1:22|PROTECTION:2,UNBREAKING:2"
+          - "DIAMOND_SWORD:1:18|SHARPNESS:2,UNBREAKING:1"
+          - "DIAMOND_CHESTPLATE:1:16|PROTECTION:2,UNBREAKING:2"
+          - "DIAMOND_BOOTS:1:16|PROTECTION:2,FEATHER_FALLING:2"
+          - "NETHERITE_INGOT:1:3"
+          - "NETHERITE_SWORD:1:4|SHARPNESS:3,UNBREAKING:2"
+          - "NETHERITE_CHESTPLATE:1:3|PROTECTION:3,UNBREAKING:2"
+          - "NETHERITE_HELMET:1:3|PROTECTION:3,UNBREAKING:2"
+          - "NETHERITE_BOOTS:1:3|PROTECTION:3,FEATHER_FALLING:3"
+          - "DIAMOND_BLOCK:1:2"

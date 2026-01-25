@@ -1,0 +1,42 @@
+file_version: 1
+menuName: '<blue>Vote weather</blue>'
+menuSize: 27
+type: CHEST
+
+items:
+  sunny:
+    slot: 11
+    name: '<yellow>Sunny</yellow>'
+    itemStack:
+      material: SUNFLOWER
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_weather_sunny}</white>'
+      - '<gray>Clear skies.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote weather sunny'
+
+  rainy:
+    slot: 15
+    name: '<blue>Rainy</blue>'
+    itemStack:
+      material: WATER_BUCKET
+      amount: 1
+    lore:
+      - '<gray>Votes:</gray> <white>{votes_weather_rainy}</white>'
+      - '<gray>Stormy atmosphere.</gray>'
+      - '<green>Click to vote</green>'
+    actions:
+      - 'MODULE;skywars;vote weather rainy'
+
+  back:
+    slot: 22
+    name: '<gray>Back</gray>'
+    itemStack:
+      material: ARROW
+      amount: 1
+    lore:
+      - '<gray>Return to settings.</gray>'
+    actions:
+      - 'OPEN;skywars_vote_main'
