@@ -22,8 +22,8 @@ This is a **Minigame**: it is designed for standalone arenas, but it can also be
 - Team size and team count configuration.
 - Storm/zone mechanics for late-game pressure.
 - Refillable loot chests with configurable loot tables.
-- Glass spawn cages that open on match start.
-- Optional regeneration region for arena cleanup.
+- Votes to choose the type of chests, number of hearts, time, and weather.
+- Store with kits and cages ready for use.
 
 ## Arena setup
 ### Common steps
