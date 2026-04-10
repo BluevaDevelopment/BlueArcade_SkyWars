@@ -73,7 +73,11 @@ public class SkyWarsListener implements Listener {
         Player player = event.getPlayer();
         GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context =
                 game.getContext(player);
-        if (context == null || context.getPhase() != GamePhase.PLAYING || !context.isPlayerPlaying(player)) {
+        if (context == null || !context.isPlayerPlaying(player)) {
+            return;
+        }
+
+        if (context.getPhase() != GamePhase.PLAYING) {
             event.setCancelled(true);
             return;
         }
@@ -87,7 +91,11 @@ public class SkyWarsListener implements Listener {
         GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context =
                 game.getContext(player);
 
-        if (context == null || !context.isPlayerPlaying(player) || context.getPhase() != GamePhase.PLAYING) {
+        if (context == null || !context.isPlayerPlaying(player)) {
+            return;
+        }
+
+        if (context.getPhase() != GamePhase.PLAYING) {
             event.setCancelled(true);
             return;
         }
@@ -103,7 +111,11 @@ public class SkyWarsListener implements Listener {
         GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context =
                 game.getContext(player);
 
-        if (context == null || !context.isPlayerPlaying(player) || context.getPhase() != GamePhase.PLAYING) {
+        if (context == null || !context.isPlayerPlaying(player)) {
+            return;
+        }
+
+        if (context.getPhase() != GamePhase.PLAYING) {
             event.setCancelled(true);
             return;
         }
@@ -136,10 +148,10 @@ public class SkyWarsListener implements Listener {
             return;
         }
 
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         if (teamsAPI != null && teamsAPI.isEnabled()) {
-            TeamInfo attackerTeam = teamsAPI.getTeam(attacker);
-            TeamInfo targetTeam = teamsAPI.getTeam(target);
+            TeamInfo<Player, Material> attackerTeam = teamsAPI.getTeam(attacker);
+            TeamInfo<Player, Material> targetTeam = teamsAPI.getTeam(target);
             if (attackerTeam != null && targetTeam != null && attackerTeam.getId().equalsIgnoreCase(targetTeam.getId())) {
                 event.setCancelled(true);
                 return;

@@ -1,5 +1,8 @@
 package net.blueva.arcade.modules.skywars.game;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import net.blueva.arcade.api.config.CoreConfigAPI;
 import net.blueva.arcade.api.config.ModuleConfigAPI;
 import net.blueva.arcade.api.game.GameContext;
@@ -19,6 +22,7 @@ import net.blueva.arcade.modules.skywars.support.outcome.OutcomeService;
 import net.blueva.arcade.modules.skywars.support.spawn.SpawnCageService;
 import net.blueva.arcade.modules.skywars.support.storm.StormService;
 import net.blueva.arcade.modules.skywars.support.vote.SkyWarsVoteService;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -29,7 +33,11 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +47,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SkyWarsGame {
+
+    private static final double CAGE_GUARD_MAX_DISTANCE_SQUARED = 2.25;
 
     private final ModuleInfo moduleInfo;
     private final ModuleConfigAPI moduleConfig;
@@ -93,9 +103,10 @@ public class SkyWarsGame {
         }
         state.setTrackedChests(lootService.loadChests(context));
         state.setScheduledEvents(scheduledEvents);
-        spawnCageService.buildCages(context, state);
 
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        loadTeamSpawns(context, state);
+
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         for (Player player : context.getPlayers()) {
             playerArena.put(player, arenaId);
             state.initializePlayer(player.getUniqueId());
@@ -104,7 +115,234 @@ public class SkyWarsGame {
             }
         }
 
+        for (Player player : context.getPlayers()) {
+            if (player != null && player.isOnline()) {
+                teleportToTeamSpawn(context, state, player);
+            }
+        }
+
+        scheduleSpawnCages(context, state);
+        scheduleCageGuard(context, state);
         descriptionService.sendDescription(context);
+    }
+
+    private void loadTeamSpawns(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                ArenaState state) {
+        if (context.getDataAccess() == null) {
+            return;
+        }
+
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
+        if (teamsAPI == null || !teamsAPI.isEnabled()) {
+            return;
+        }
+
+        String spawnBase = resolveDataBasePath(context, "team_spawns");
+        World arenaWorld = context.getArenaAPI() != null ? context.getArenaAPI().getWorld() : null;
+
+        int teamIndex = 1;
+        boolean foundAny = false;
+        for (TeamInfo<Player, Material> team : teamsAPI.getTeams()) {
+            String teamId = team.getId();
+            if (teamId == null || teamId.isBlank()) {
+                teamIndex++;
+                continue;
+            }
+            teamId = teamId.toLowerCase();
+            String canonicalPath = spawnBase + "." + teamId;
+            String numericPath = spawnBase + "." + teamIndex;
+
+            String resolvedPath = null;
+            if (context.getDataAccess().hasGameData(canonicalPath)) {
+                resolvedPath = canonicalPath;
+            } else if (context.getDataAccess().hasGameData(numericPath)) {
+                resolvedPath = numericPath;
+            }
+
+            if (resolvedPath != null) {
+                Location spawn = context.getDataAccess().getGameLocation(resolvedPath);
+                if (spawn != null) {
+                    if (spawn.getWorld() == null && arenaWorld != null) {
+                        spawn = new Location(arenaWorld, spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getYaw(), spawn.getPitch());
+                    }
+                    state.setTeamSpawn(teamId, spawn);
+                    foundAny = true;
+                }
+            }
+            teamIndex++;
+        }
+
+        // Adapter: if no team spawns configured, migrate from generic spawns.list to disk
+        if (!foundAny && context.getArenaAPI() != null) {
+            List<Location> genericSpawns = context.getArenaAPI().getSpawns();
+            if (!genericSpawns.isEmpty()) {
+                Map<String, Location> migrated = new HashMap<>();
+                List<TeamInfo<Player, Material>> orderedTeams = new ArrayList<>(teamsAPI.getTeams());
+                for (int i = 0; i < genericSpawns.size(); i++) {
+                    Location spawn = genericSpawns.get(i);
+                    if (spawn == null) {
+                        continue;
+                    }
+                    if (spawn.getWorld() == null && arenaWorld != null) {
+                        spawn = new Location(arenaWorld, spawn.getX(), spawn.getY(), spawn.getZ(), spawn.getYaw(), spawn.getPitch());
+                    }
+                    String teamId;
+                    if (i < orderedTeams.size()) {
+                        teamId = orderedTeams.get(i).getId() != null ? orderedTeams.get(i).getId() : String.valueOf(i + 1);
+                        if (teamId == null || teamId.isBlank()) {
+                            teamId = String.valueOf(i + 1);
+                        } else {
+                            teamId = teamId.toLowerCase();
+                        }
+                    } else {
+                        teamId = String.valueOf(i + 1);
+                    }
+                    migrated.put(teamId, spawn);
+                    state.setTeamSpawn(teamId, spawn);
+                }
+                if (!migrated.isEmpty()) {
+                    migrateSpawnsToDisk(context.getArenaId(), context.getGameId(), migrated);
+                }
+            }
+        }
+    }
+
+    private void migrateSpawnsToDisk(int arenaId, String gameId, Map<String, Location> teamSpawns) {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin("BlueArcade3");
+        if (plugin == null) {
+            return;
+        }
+        File gameFile = new File(plugin.getDataFolder(),
+                "data/arenas/" + arenaId + "/games/" + gameId + ".json");
+        if (!gameFile.exists()) {
+            return;
+        }
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            JsonObject root;
+            try (FileReader reader = new FileReader(gameFile)) {
+                root = gson.fromJson(reader, JsonObject.class);
+            }
+            if (root == null) {
+                return;
+            }
+
+            if (!root.has("game")) root.add("game", new JsonObject());
+            JsonObject game = root.getAsJsonObject("game");
+            if (!game.has("play_area")) game.add("play_area", new JsonObject());
+            JsonObject playArea = game.getAsJsonObject("play_area");
+
+            JsonObject teamSpawnsObj = new JsonObject();
+            for (Map.Entry<String, Location> entry : teamSpawns.entrySet()) {
+                Location loc = entry.getValue();
+                JsonObject locObj = new JsonObject();
+                locObj.addProperty("x", loc.getX());
+                locObj.addProperty("y", loc.getY());
+                locObj.addProperty("z", loc.getZ());
+                locObj.addProperty("yaw", loc.getYaw());
+                locObj.addProperty("pitch", loc.getPitch());
+                teamSpawnsObj.add(entry.getKey(), locObj);
+            }
+            playArea.add("team_spawns", teamSpawnsObj);
+
+            if (root.has("spawns")) {
+                JsonObject spawnsSection = root.getAsJsonObject("spawns");
+                if (spawnsSection != null) {
+                    spawnsSection.remove("list");
+                    if (spawnsSection.size() == 0) {
+                        root.remove("spawns");
+                    }
+                }
+            }
+
+            try (FileWriter writer = new FileWriter(gameFile)) {
+                gson.toJson(root, writer);
+            }
+        } catch (Exception e) {
+            plugin.getLogger().severe("[SkyWars] Failed to migrate spawns for arena " + arenaId + ": " + e.getMessage());
+        }
+    }
+
+    private void teleportToTeamSpawn(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                     ArenaState state,
+                                     Player player) {
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
+        if (teamsAPI == null || !teamsAPI.isEnabled()) {
+            return;
+        }
+
+        TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
+        if (team == null) {
+            return;
+        }
+
+        Location spawn = state.getTeamSpawn(team.getId());
+        if (spawn == null || spawn.getWorld() == null) {
+            return;
+        }
+
+        context.getSchedulerAPI().runAtEntity(player, () -> player.teleport(centerSpawnLocation(spawn)));
+    }
+
+    private String resolveDataBasePath(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                       String section) {
+        if (context.getDataAccess().hasGameData("game.play_area." + section)) {
+            return "game.play_area." + section;
+        }
+        return "game." + section;
+    }
+
+    private Location centerSpawnLocation(Location spawn) {
+        double centeredX = Math.floor(spawn.getX()) + 0.5;
+        double centeredZ = Math.floor(spawn.getZ()) + 0.5;
+        return new Location(spawn.getWorld(), centeredX, spawn.getY(), centeredZ, spawn.getYaw(), spawn.getPitch());
+    }
+
+    private void scheduleSpawnCages(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                    ArenaState state) {
+        int arenaId = context.getArenaId();
+        String taskId = "arena_" + arenaId + "_skywars_cages";
+        int maxTicks = 40;
+        int[] ticks = {0};
+        context.getSchedulerAPI().runTimer(taskId, () -> {
+            spawnCageService.buildCages(context, state);
+            ticks[0]++;
+            if (ticks[0] >= maxTicks || state.getCagedPlayerCount() >= context.getPlayers().size()) {
+                context.getSchedulerAPI().cancelTask(taskId);
+            }
+        }, 1L, 1L);
+    }
+
+    private void scheduleCageGuard(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                   ArenaState state) {
+        int arenaId = context.getArenaId();
+        String taskId = "arena_" + arenaId + "_skywars_cage_guard";
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
+        context.getSchedulerAPI().runTimer(taskId, () -> {
+            if (teamsAPI == null || !teamsAPI.isEnabled()) {
+                return;
+            }
+            for (Player player : context.getPlayers()) {
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+                TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
+                if (team == null) {
+                    continue;
+                }
+                Location spawn = state.getTeamSpawn(team.getId());
+                if (spawn == null || spawn.getWorld() == null) {
+                    continue;
+                }
+                Location playerLoc = player.getLocation();
+                if (playerLoc.getWorld() == null || !playerLoc.getWorld().equals(spawn.getWorld())) {
+                    continue;
+                }
+                if (playerLoc.distanceSquared(spawn) > CAGE_GUARD_MAX_DISTANCE_SQUARED) {
+                    context.getSchedulerAPI().runAtEntity(player, () -> player.teleport(centerSpawnLocation(spawn)));
+                }
+            }
+        }, 10L, 10L);
     }
 
     public void handleCountdownTick(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
@@ -163,6 +401,7 @@ public class SkyWarsGame {
         lootService.startChestMarkers(context, state);
         lootService.prefillChests(context, state);
         lootService.startChestRefills(context, state);
+        context.getSchedulerAPI().cancelTask("arena_" + context.getArenaId() + "_skywars_cage_guard");
         spawnCageService.removeCages(context, state);
         if (voteService != null) {
             voteService.broadcastVoteResults(context, state);
@@ -394,7 +633,7 @@ public class SkyWarsGame {
         if (context == null) {
             return true;
         }
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         if (teamsAPI == null || !teamsAPI.isEnabled()) {
             return true;
         }
@@ -410,7 +649,7 @@ public class SkyWarsGame {
     }
 
     public List<String> getAliveTeamIds(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         if (teamsAPI == null || !teamsAPI.isEnabled()) {
             List<String> ids = new ArrayList<>();
             if (!context.getAlivePlayers().isEmpty()) {
@@ -421,7 +660,7 @@ public class SkyWarsGame {
 
         Set<String> teamIds = new HashSet<>();
         for (Player player : context.getAlivePlayers()) {
-            TeamInfo team = teamsAPI.getTeam(player);
+            TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
             if (team != null) {
                 teamIds.add(team.getId());
             }
@@ -431,12 +670,12 @@ public class SkyWarsGame {
 
     public Map<String, Integer> getTeamKills(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
         Map<String, Integer> teamKills = new HashMap<>();
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         for (Player player : context.getPlayers()) {
             int kills = getPlayerKills(context, player);
             String teamId = "solo";
             if (teamsAPI != null && teamsAPI.isEnabled()) {
-                TeamInfo team = teamsAPI.getTeam(player);
+                TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
                 if (team != null) {
                     teamId = team.getId();
                 }
@@ -448,14 +687,14 @@ public class SkyWarsGame {
 
     public List<Player> getTeamPlayers(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
                                        String teamId) {
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         List<Player> players = new ArrayList<>();
         for (Player player : context.getPlayers()) {
             if (teamsAPI == null || !teamsAPI.isEnabled()) {
                 players.add(player);
                 continue;
             }
-            TeamInfo team = teamsAPI.getTeam(player);
+            TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
             if (team != null && team.getId().equalsIgnoreCase(teamId)) {
                 players.add(player);
             }
@@ -546,7 +785,7 @@ public class SkyWarsGame {
     }
 
     private boolean shouldEndForVictory(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
-        TeamsAPI teamsAPI = context.getTeamsAPI();
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
         if (teamsAPI != null && teamsAPI.isEnabled()) {
             return getAliveTeamIds(context).size() <= 1;
         }

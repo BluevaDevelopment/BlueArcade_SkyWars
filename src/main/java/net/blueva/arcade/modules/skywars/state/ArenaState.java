@@ -27,7 +27,10 @@ public class ArenaState {
     private final Map<String, Long> chestRefillTimes = new ConcurrentHashMap<>();
     private final Set<String> trackedChestKeys = ConcurrentHashMap.newKeySet();
     private final Map<String, Material> cageBlocks = new ConcurrentHashMap<>();
+    private final Set<UUID> cagedPlayers = ConcurrentHashMap.newKeySet();
+    private final Set<String> cagedSpawnKeys = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Long> fallProtectionUntil = new ConcurrentHashMap<>();
+    private final Map<String, Location> teamSpawns = new ConcurrentHashMap<>();
     private List<TrackedChest> trackedChests = new ArrayList<>();
     private List<ScheduledEvent> scheduledEvents = new ArrayList<>();
     private int nextEventIndex;
@@ -343,6 +346,38 @@ public class ArenaState {
         cageBlocks.clear();
     }
 
+    public boolean hasCage(UUID playerId) {
+        return playerId != null && cagedPlayers.contains(playerId);
+    }
+
+    public void markCageBuilt(UUID playerId) {
+        if (playerId != null) {
+            cagedPlayers.add(playerId);
+        }
+    }
+
+    public int getCagedPlayerCount() {
+        return cagedPlayers.size();
+    }
+
+    public void clearCagedPlayers() {
+        cagedPlayers.clear();
+    }
+
+    public boolean isSpawnCaged(Location location) {
+        return location != null && cagedSpawnKeys.contains(toKey(location));
+    }
+
+    public void markSpawnCaged(Location location) {
+        if (location != null) {
+            cagedSpawnKeys.add(toKey(location));
+        }
+    }
+
+    public void clearCagedSpawns() {
+        cagedSpawnKeys.clear();
+    }
+
     private String toKey(Location location) {
         return location.getWorld().getName() + ":" +
                 location.getBlockX() + ":" +
@@ -372,5 +407,22 @@ public class ArenaState {
         public String getLabel() {
             return label;
         }
+    }
+
+    public void setTeamSpawn(String teamId, Location location) {
+        if (teamId != null) {
+            teamSpawns.put(teamId.toLowerCase(), location);
+        }
+    }
+
+    public Location getTeamSpawn(String teamId) {
+        if (teamId == null) {
+            return null;
+        }
+        return teamSpawns.get(teamId.toLowerCase());
+    }
+
+    public Map<String, Location> getTeamSpawns() {
+        return new ConcurrentHashMap<>(teamSpawns);
     }
 }

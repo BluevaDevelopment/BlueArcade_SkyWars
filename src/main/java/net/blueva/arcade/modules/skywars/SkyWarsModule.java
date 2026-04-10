@@ -9,12 +9,14 @@ import net.blueva.arcade.api.game.GameContext;
 import net.blueva.arcade.api.game.GameModule;
 import net.blueva.arcade.api.game.GameResult;
 import net.blueva.arcade.api.module.ModuleInfo;
+import net.blueva.arcade.api.player.PlayerAPI;
 import net.blueva.arcade.api.stats.StatDefinition;
 import net.blueva.arcade.api.stats.StatScope;
 import net.blueva.arcade.api.stats.StatsAPI;
 import net.blueva.arcade.api.store.StoreAPI;
 import net.blueva.arcade.api.ui.ItemAPI;
 import net.blueva.arcade.api.ui.MenuAPI;
+import net.blueva.arcade.api.setup.SetupRequirement;
 import net.blueva.arcade.api.ui.VoteMenuAPI;
 import net.blueva.arcade.modules.skywars.game.SkyWarsGame;
 import net.blueva.arcade.modules.skywars.listener.SkyWarsListener;
@@ -34,6 +36,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
+import java.util.Set;
 
 public class SkyWarsModule implements GameModule<Player, Location, World, Material, ItemStack, Sound, Block, Entity, Listener, EventPriority> {
 
@@ -41,6 +44,8 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
     private CoreConfigAPI coreConfig;
     private ModuleInfo moduleInfo;
     private StatsAPI statsAPI;
+    private MenuAPI<Player, Material> menuAPI;
+    private ItemAPI<Player, ItemStack, Material> itemAPI;
 
     private SkyWarsGame game;
 
@@ -64,11 +69,14 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
         storeService.registerStoreItems();
 
         MenuAPI<Player, Material> menuAPI = ModuleAPI.getMenuAPI();
+        this.menuAPI = menuAPI;
         @SuppressWarnings("unchecked")
         ItemAPI<Player, ItemStack, Material> itemAPI = (ItemAPI<Player, ItemStack, Material>) ModuleAPI.getItemAPI();
+        this.itemAPI = itemAPI;
         SkyWarsVoteService voteService = new SkyWarsVoteService(moduleConfig, menuAPI, itemAPI, moduleInfo.getId());
 
         game = new SkyWarsGame(moduleInfo, moduleConfig, coreConfig, statsAPI, storeAPI, voteService);
+        voteService.setGame(game);
 
         if (menuAPI != null) {
             menuAPI.registerModuleActionHandler(moduleInfo.getId(), (player, payload) -> {
@@ -117,6 +125,11 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
     }
 
     @Override
+    public Set<SetupRequirement> getDisabledRequirements() {
+        return Set.of(SetupRequirement.SPAWNS);
+    }
+
+    @Override
     public void onGameStart(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
         game.beginPlaying(context);
     }
@@ -131,6 +144,12 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
     public void onDisable() {
         if (game != null) {
             game.shutdown();
+        }
+        if (menuAPI != null && moduleInfo != null) {
+            menuAPI.unregisterModuleMenuAPI(moduleInfo.getId());
+        }
+        if (itemAPI != null) {
+            itemAPI.unregisterClickHandler("skywars_vote_settings");
         }
     }
 
@@ -162,8 +181,8 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
         moduleConfig.register("settings.yml", 2);
         moduleConfig.register("achievements.yml", 1);
         moduleConfig.register("store.yml", 1);
-        moduleConfig.register("kits.yml", 1);
-        moduleConfig.register("cage.yml", 1);
+        moduleConfig.registerCopyOnly("kits.yml");
+        moduleConfig.registerCopyOnly("cage.yml");
         moduleConfig.register("menus/java/skywars_vote_main.yml", 1);
         moduleConfig.register("menus/java/skywars_vote_chests.yml", 1);
         moduleConfig.register("menus/java/skywars_vote_hearts.yml", 1);
@@ -182,16 +201,16 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
         }
 
         statsAPI.registerModuleStat(moduleInfo.getId(),
-                new StatDefinition("wins", "Wins", "SkyWars victories", StatScope.MODULE));
+                new StatDefinition("wins", moduleConfig.getStringFrom("language.yml", "stats.labels.wins", "Wins"), moduleConfig.getStringFrom("language.yml", "stats.descriptions.wins", "SkyWars victories"), StatScope.MODULE));
         statsAPI.registerModuleStat(moduleInfo.getId(),
-                new StatDefinition("games_played", "Games Played", "SkyWars matches played", StatScope.MODULE));
+                new StatDefinition("games_played", moduleConfig.getStringFrom("language.yml", "stats.labels.games_played", "Games Played"), moduleConfig.getStringFrom("language.yml", "stats.descriptions.games_played", "SkyWars matches played"), StatScope.MODULE));
         statsAPI.registerModuleStat(moduleInfo.getId(),
-                new StatDefinition("kills", "Eliminations", "Opponents eliminated in SkyWars", StatScope.MODULE));
+                new StatDefinition("kills", moduleConfig.getStringFrom("language.yml", "stats.labels.kills", "Eliminations"), moduleConfig.getStringFrom("language.yml", "stats.descriptions.kills", "Opponents eliminated in SkyWars"), StatScope.MODULE));
         statsAPI.registerModuleStat(moduleInfo.getId(),
-                new StatDefinition("chests_looted", "Chests Looted", "Looted chests in SkyWars", StatScope.MODULE));
+                new StatDefinition("chests_looted", moduleConfig.getStringFrom("language.yml", "stats.labels.chests_looted", "Chests Looted"), moduleConfig.getStringFrom("language.yml", "stats.descriptions.chests_looted", "Looted chests in SkyWars"), StatScope.MODULE));
         statsAPI.registerModuleStat(moduleInfo.getId(),
-                new StatDefinition("storm_damage_taken", "Storm Damage Taken",
-                        "Damage received from the storm in SkyWars", StatScope.MODULE));
+                new StatDefinition("storm_damage_taken", moduleConfig.getStringFrom("language.yml", "stats.labels.storm_damage_taken", "Storm Damage Taken"),
+                        moduleConfig.getStringFrom("language.yml", "stats.descriptions.storm_damage_taken", "Damage received from the storm in SkyWars"), StatScope.MODULE));
     }
 
     private void registerAchievements() {

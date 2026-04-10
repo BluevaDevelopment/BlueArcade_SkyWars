@@ -3,6 +3,7 @@ package net.blueva.arcade.modules.skywars.support.spawn;
 import net.blueva.arcade.api.config.ModuleConfigAPI;
 import net.blueva.arcade.api.game.GameContext;
 import net.blueva.arcade.api.store.StoreAPI;
+import net.blueva.arcade.api.team.TeamInfo;
 import net.blueva.arcade.api.team.TeamsAPI;
 import net.blueva.arcade.modules.skywars.state.ArenaState;
 import org.bukkit.Bukkit;
@@ -35,30 +36,37 @@ public class SpawnCageService {
             return;
         }
 
-        if (context.getArenaAPI() == null) {
-            return;
-        }
-
-        List<Location> spawns = context.getArenaAPI().getSpawns();
-        if (spawns == null || spawns.isEmpty()) {
-            return;
-        }
-
         List<Player> players = context.getPlayers();
-        int interiorRadius = resolveInteriorRadius(context);
+        if (players.isEmpty()) {
+            return;
+        }
+
+        int interiorRadius = 0;
         int wallOffset = interiorRadius + 1;
         int floorOffset = -1;
         int roofOffset = 3;
         int wallTopOffset = 2;
+        Map<String, Location> teamSpawnMap = state.getTeamSpawns();
+        List<Location> spawns = !teamSpawnMap.isEmpty()
+                ? new java.util.ArrayList<>(teamSpawnMap.values())
+                : (context.getArenaAPI() != null ? context.getArenaAPI().getSpawns() : List.of());
 
-        for (int index = 0; index < spawns.size(); index++) {
-            Location spawn = spawns.get(index);
+        for (Player player : players) {
+            if (player == null || !player.isOnline() || state.hasCage(player.getUniqueId())) {
+                continue;
+            }
+            Location spawn = resolveSpawnForPlayer(player, spawns, state, context);
+            if (spawn == null) {
+                continue;
+            }
+            CageDefinition cage = resolveCageDefinition(player);
+            spawn = player.getLocation();
             if (spawn == null || spawn.getWorld() == null) {
                 continue;
             }
-
-            Player player = index < players.size() ? players.get(index) : null;
-            CageDefinition cage = resolveCageDefinition(player);
+            if (context.getArenaAPI() != null && !context.getArenaAPI().isInBounds(spawn)) {
+                continue;
+            }
 
             int baseX = spawn.getBlockX();
             int baseY = spawn.getBlockY();
@@ -100,6 +108,7 @@ public class SpawnCageService {
                     }
                 }
             }
+            markPlayersAtSpawn(players, state, spawn);
         }
     }
 
@@ -127,6 +136,8 @@ public class SpawnCageService {
         }
 
         state.clearCageBlocks();
+        state.clearCagedPlayers();
+        state.clearCagedSpawns();
     }
 
     private void placeBlock(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
@@ -169,15 +180,78 @@ public class SpawnCageService {
         }
     }
 
-    private int resolveInteriorRadius(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
-        TeamsAPI teamsAPI = context.getTeamsAPI();
-        if (teamsAPI != null && teamsAPI.isEnabled()) {
-            int teamSize = teamsAPI.getTeamSize();
-            if (teamSize > 1) {
-                return 1;
+    private Location resolveSpawnForPlayer(Player player,
+                                           List<Location> spawns,
+                                           ArenaState state,
+                                           GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
+        if (player == null) {
+            return null;
+        }
+        Location playerLocation = player.getLocation();
+        if (playerLocation == null || playerLocation.getWorld() == null) {
+            return null;
+        }
+        if (contextIsOutOfBounds(context, playerLocation)) {
+            return null;
+        }
+        if (spawns == null || spawns.isEmpty()) {
+            return playerLocation;
+        }
+
+        Location closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        for (Location spawn : spawns) {
+            if (spawn == null) {
+                continue;
+            }
+            if (state.isSpawnCaged(spawn)) {
+                continue;
+            }
+            double distance = squaredDistanceCoords(spawn, playerLocation);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = spawn;
             }
         }
-        return 0;
+
+        double maxDistanceSquared = 2.25;
+        if (closest == null || closestDistance > maxDistanceSquared) {
+            return null;
+        }
+        return closest;
+    }
+
+    private boolean contextIsOutOfBounds(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                         Location location) {
+        if (context == null || location == null) {
+            return true;
+        }
+        return context.getArenaAPI() != null && !context.getArenaAPI().isInBounds(location);
+    }
+
+    private void markPlayersAtSpawn(List<Player> players, ArenaState state, Location spawn) {
+        if (spawn == null || spawn.getWorld() == null) {
+            return;
+        }
+        state.markSpawnCaged(spawn);
+        for (Player candidate : players) {
+            if (candidate == null || !candidate.isOnline()) {
+                continue;
+            }
+            if (squaredDistanceCoords(candidate.getLocation(), spawn) <= 2.25) {
+                state.markCageBuilt(candidate.getUniqueId());
+            }
+        }
+    }
+
+    private double squaredDistanceCoords(Location a, Location b) {
+        if (a == null || b == null) {
+            return Double.MAX_VALUE;
+        }
+        double dx = a.getX() - b.getX();
+        double dy = a.getY() - b.getY();
+        double dz = a.getZ() - b.getZ();
+        return dx * dx + dy * dy + dz * dz;
     }
 
     private CageDefinition resolveCageDefinition(Player player) {
@@ -193,6 +267,83 @@ public class SpawnCageService {
         Material material = resolveMaterialFrom("cage.yml", base + ".material", Material.GLASS);
         boolean headClear = moduleConfig.getBooleanFrom("cage.yml", base + ".head_clear", false);
         return new CageDefinition(material, headClear);
+    }
+
+    private List<Player> resolveCageOwners(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                           List<Location> spawns) {
+        List<Player> players = context.getPlayers();
+        List<Player> owners = new java.util.ArrayList<>();
+        if (spawns == null || spawns.isEmpty()) {
+            return owners;
+        }
+        if (players.isEmpty()) {
+            return owners;
+        }
+
+        if (players.size() <= spawns.size()) {
+            for (int index = 0; index < spawns.size(); index++) {
+                owners.add(index < players.size() ? players.get(index) : null);
+            }
+            return owners;
+        }
+
+        TeamsAPI<Player, Material> teamsAPI = context.getTeamsAPI();
+        if (teamsAPI != null && teamsAPI.isEnabled()) {
+            return resolveTeamCageOwners(teamsAPI, players, spawns.size());
+        }
+
+        for (int index = 0; index < spawns.size(); index++) {
+            owners.add(players.get(index));
+        }
+        return owners;
+    }
+
+    private List<Player> resolveTeamCageOwners(TeamsAPI<Player, Material> teamsAPI,
+                                               List<Player> players,
+                                               int spawnCount) {
+        List<Player> owners = new java.util.ArrayList<>(java.util.Collections.nCopies(spawnCount, null));
+        Map<String, List<Player>> teamMembers = new java.util.LinkedHashMap<>();
+        for (Player player : players) {
+            String teamId = resolveTeamId(teamsAPI, player);
+            teamMembers.computeIfAbsent(teamId, ignored -> new java.util.ArrayList<>()).add(player);
+        }
+
+        List<String> orderedTeams = new java.util.ArrayList<>();
+        for (TeamInfo<Player, Material> team : teamsAPI.getTeams()) {
+            if (teamMembers.containsKey(team.getId())) {
+                orderedTeams.add(team.getId());
+            }
+        }
+        for (String teamId : teamMembers.keySet()) {
+            if (!orderedTeams.contains(teamId)) {
+                orderedTeams.add(teamId);
+            }
+        }
+
+        int spawnIndex = 0;
+        for (String teamId : orderedTeams) {
+            List<Player> members = teamMembers.get(teamId);
+            if (members == null || members.isEmpty()) {
+                continue;
+            }
+            int slot = spawnIndex % spawnCount;
+            if (owners.get(slot) == null) {
+                owners.set(slot, members.get(0));
+            }
+            spawnIndex++;
+        }
+        return owners;
+    }
+
+    private String resolveTeamId(TeamsAPI<Player, Material> teamsAPI, Player player) {
+        if (teamsAPI == null || player == null) {
+            return "solo:" + (player == null ? "unknown" : player.getUniqueId());
+        }
+        TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
+        if (team != null && team.getId() != null) {
+            return team.getId();
+        }
+        return "solo:" + player.getUniqueId();
     }
 
     private String getCageCategoryId() {

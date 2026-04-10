@@ -1,14 +1,16 @@
 package net.blueva.arcade.modules.skywars.support.vote;
 
+import net.blueva.arcade.api.ModuleAPI;
 import net.blueva.arcade.api.config.ModuleConfigAPI;
 import net.blueva.arcade.api.game.GameContext;
 import net.blueva.arcade.api.game.GamePhase;
 import net.blueva.arcade.api.ui.ItemAPI;
 import net.blueva.arcade.api.ui.LobbyItemDefinition;
 import net.blueva.arcade.api.ui.MenuAPI;
-import net.blueva.arcade.api.ui.menu.MenuDefinition;
 import net.blueva.arcade.api.ui.MessageAPI;
-import net.blueva.arcade.api.ModuleAPI;
+import net.blueva.arcade.api.utils.PlayerUtil;
+import net.blueva.arcade.api.ui.menu.MenuDefinition;
+import net.blueva.arcade.modules.skywars.game.SkyWarsGame;
 import net.blueva.arcade.modules.skywars.state.ArenaState;
 import net.blueva.arcade.modules.skywars.state.VoteState;
 import org.bukkit.Location;
@@ -48,6 +50,7 @@ public class SkyWarsVoteService {
     private final String moduleId;
     private final SkyWarsVoteMenuRepository menuRepository;
     private final VoteState waitingVoteState;
+    private SkyWarsGame game;
 
     public SkyWarsVoteService(ModuleConfigAPI moduleConfig,
                               MenuAPI<Player, Material> menuAPI,
@@ -67,19 +70,8 @@ public class SkyWarsVoteService {
      * Register menu opener with the core so OPEN actions can find our menus.
      */
     private void registerMenusWithCore() {
-        try {
-            // Create wrapper MenuAPI that handles our vote menus
-            SkyWarsMenuAPI skyWarsMenuAPI = new SkyWarsMenuAPI(this.menuAPI, this);
-
-            // Register with core
-            Class<?> mainClass = Class.forName("net.blueva.arcade.v3.Main");
-            Object mainInstance = mainClass.getMethod("getPlugin").invoke(null);
-            mainClass.getMethod("registerModuleMenuAPI", String.class, MenuAPI.class)
-                    .invoke(mainInstance, "skywars", skyWarsMenuAPI);
-        } catch (Exception e) {
-            System.err.println("[SkyWarsVoteService] Failed to register MenuAPI:");
-            e.printStackTrace();
-        }
+        SkyWarsMenuAPI skyWarsMenuAPI = new SkyWarsMenuAPI(this.menuAPI, this);
+        menuAPI.registerModuleMenuAPI("skywars", skyWarsMenuAPI);
     }
 
     public VoteState createVoteState() {
@@ -93,6 +85,10 @@ public class SkyWarsVoteService {
 
     public VoteState getWaitingVoteState() {
         return waitingVoteState;
+    }
+
+    public void setGame(SkyWarsGame game) {
+        this.game = game;
     }
 
     public void applyPendingVotes(ArenaState state, List<Player> players) {
@@ -162,42 +158,9 @@ public class SkyWarsVoteService {
      *
      * @param game SkyWarsGame instance
      */
-    public void registerClickHandler(Object game) {
-        try {
-            Class<?> registryClass = Class.forName("net.blueva.arcade.v3.items.ItemClickRegistry");
-            Class<?> handlerClass = Class.forName("net.blueva.arcade.v3.items.ItemClickHandler");
-
-            Object registry = registryClass.getMethod("getInstance").invoke(null);
-
-            // Create proxy handler that calls game.handleVoteCommand
-            Object handler = java.lang.reflect.Proxy.newProxyInstance(
-                    handlerClass.getClassLoader(),
-                    new Class<?>[]{handlerClass},
-                    (proxy, method, args) -> {
-                        if (method.getName().equals("handleClick") && args.length > 0) {
-                            Player player = (Player) args[0];
-                            // Call game.handleVoteCommand(player, ["menu", "main"])
-                            try {
-                                java.lang.reflect.Method handleMethod = game.getClass()
-                                        .getMethod("handleVoteCommand", Player.class, String[].class);
-                                Object result = handleMethod.invoke(game, player, new String[]{"menu", "main"});
-                                return result;
-                            } catch (Exception e) {
-                                System.err.println("[SkyWars] ERROR in handler:");
-                                e.printStackTrace();
-                                return false;
-                            }
-                        }
-                        return null;
-                    }
-            );
-
-            registryClass.getMethod("registerHandler", String.class, handlerClass)
-                    .invoke(registry, "skywars_vote_settings", handler);
-        } catch (Exception e) {
-            System.err.println("[SkyWars] ========== FAILED TO REGISTER HANDLER ==========");
-            e.printStackTrace();
-        }
+    public void registerClickHandler(SkyWarsGame game) {
+        itemAPI.registerClickHandler("skywars_vote_settings",
+                player -> game.handleVoteCommand(player, new String[]{"menu", "main"}));
     }
 
     public boolean handleVoteCommand(Player player,
@@ -450,7 +413,7 @@ public class SkyWarsVoteService {
         if (option != null) {
             message = message.replace("{option}", getOptionLabel(category, option));
         }
-        context.getMessagesAPI().send(player, message);
+        context.getMessagesAPI().sendRaw(player, message);
     }
 
     private void sendWaitingMessage(Player player, String path) {
@@ -486,29 +449,14 @@ public class SkyWarsVoteService {
             return;
         }
         MessageAPI<Player> messagesAPI = context.getMessagesAPI();
-        List<Player> players = context.getPlayers();
-        boolean sent = false;
-        if (players != null && !players.isEmpty()) {
-            for (Player player : players) {
-                if (player == null) {
-                    continue;
-                }
-                if (messagesAPI != null) {
-                    messagesAPI.sendRaw(player, message);
-                } else {
-                    player.sendMessage(message);
-                }
-                sent = true;
+        for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (!context.isPlayerPlaying(player)) {
+                continue;
             }
-        }
-
-        if (!sent) {
-            for (Player player : org.bukkit.Bukkit.getOnlinePlayers()) {
-                if (messagesAPI != null) {
-                    messagesAPI.sendRaw(player, message);
-                } else {
-                    player.sendMessage(message);
-                }
+            if (messagesAPI != null) {
+                messagesAPI.sendRaw(player, message);
+            } else {
+                player.sendMessage(message);
             }
         }
     }
@@ -527,14 +475,42 @@ public class SkyWarsVoteService {
                 .replace("{category}", categoryLabel)
                 .replace("{option}", optionLabel);
 
+        GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context = getGameContext(player);
+        if (context == null) {
+            if (isPlayerInWaitingArena(player)) {
+                sendWaitingBroadcast(player, message);
+            }
+            return;
+        }
+        broadcastMessage(context, message);
+    }
+
+    private GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> getGameContext(Player player) {
+        if (game == null || player == null) {
+            return null;
+        }
+        return game.getContext(player);
+    }
+
+    public boolean isPlayerInWaitingArena(Player player) {
+        @SuppressWarnings("unchecked")
+        PlayerUtil<Player> playerUtil = (PlayerUtil<Player>) ModuleAPI.getPlayerUtil();
+        if (playerUtil == null) {
+            return false;
+        }
+        return playerUtil.isInWaitingArena(player);
+    }
+
+    private void sendWaitingBroadcast(Player player, String message) {
+        if (player == null || message == null || message.isBlank()) {
+            return;
+        }
         @SuppressWarnings("unchecked")
         MessageAPI<Player> messagesAPI = (MessageAPI<Player>) ModuleAPI.getMessagesAPI();
-        for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
-            if (messagesAPI != null) {
-                messagesAPI.sendRaw(online, message);
-            } else {
-                online.sendMessage(message);
-            }
+        if (messagesAPI != null) {
+            messagesAPI.sendRaw(player, message);
+        } else {
+            player.sendMessage(message);
         }
     }
 

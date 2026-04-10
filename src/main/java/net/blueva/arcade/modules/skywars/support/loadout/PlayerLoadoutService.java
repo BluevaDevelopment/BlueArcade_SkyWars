@@ -11,9 +11,13 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionType;
 
 import java.util.List;
+import java.util.Locale;
 
 public class PlayerLoadoutService {
 
@@ -112,33 +116,109 @@ public class PlayerLoadoutService {
         for (String itemString : items) {
             try {
                 String[] parts = itemString.split(":");
-                if (parts.length >= 2) {
-                    Material material = Material.valueOf(parts[0].toUpperCase());
-                    int amount = Integer.parseInt(parts[1]);
-                    int slot = parts.length >= 3 ? Integer.parseInt(parts[2]) : -1;
+                if (parts.length < 2) {
+                    continue;
+                }
 
-                    org.bukkit.inventory.ItemStack item = new org.bukkit.inventory.ItemStack(material, amount);
+                Material material = Material.valueOf(parts[0].toUpperCase(Locale.ROOT));
+                int amount = Integer.parseInt(parts[1]);
+                int slot = -1;
+                int metadataStartIndex = 2;
 
-                    if (slot == 40) {
-                        inventory.setItemInOffHand(item);
-                    } else if (slot == 39) {
-                        inventory.setHelmet(item);
-                    } else if (slot == 38) {
-                        inventory.setChestplate(item);
-                    } else if (slot == 37) {
-                        inventory.setLeggings(item);
-                    } else if (slot == 36) {
-                        inventory.setBoots(item);
-                    } else if (slot >= 0 && slot < 36) {
-                        inventory.setItem(slot, item);
-                    } else {
-                        inventory.addItem(item);
-                    }
+                if (parts.length >= 3 && isInteger(parts[2])) {
+                    slot = Integer.parseInt(parts[2]);
+                    metadataStartIndex = 3;
+                }
+
+                ItemStack item = new ItemStack(material, amount);
+                applyPotionMetadata(item, parts, metadataStartIndex);
+
+                if (slot == 40) {
+                    inventory.setItemInOffHand(item);
+                } else if (slot == 39) {
+                    inventory.setHelmet(item);
+                } else if (slot == 38) {
+                    inventory.setChestplate(item);
+                } else if (slot == 37) {
+                    inventory.setLeggings(item);
+                } else if (slot == 36) {
+                    inventory.setBoots(item);
+                } else if (slot >= 0 && slot < 36) {
+                    inventory.setItem(slot, item);
+                } else {
+                    inventory.addItem(item);
                 }
             } catch (Exception ignored) {
                 // Ignore malformed entries
             }
         }
+    }
+
+    private void applyPotionMetadata(ItemStack item, String[] parts, int metadataStartIndex) {
+        if (item == null || !isPotionMaterial(item.getType()) || parts.length <= metadataStartIndex) {
+            return;
+        }
+
+        PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
+        if (potionMeta == null) {
+            return;
+        }
+
+        PotionType potionType = resolvePotionType(parts[metadataStartIndex]);
+        if (potionType == null) {
+            return;
+        }
+
+        boolean extended = parts.length > metadataStartIndex + 1 && isBoolean(parts[metadataStartIndex + 1])
+                && Boolean.parseBoolean(parts[metadataStartIndex + 1]);
+        boolean upgraded = parts.length > metadataStartIndex + 2 && isBoolean(parts[metadataStartIndex + 2])
+                && Boolean.parseBoolean(parts[metadataStartIndex + 2]);
+
+        potionMeta.setBasePotionData(new PotionData(potionType, extended, upgraded));
+        item.setItemMeta(potionMeta);
+    }
+
+
+    private PotionType resolvePotionType(String rawPotionType) {
+        if (rawPotionType == null || rawPotionType.isBlank()) {
+            return null;
+        }
+
+        String normalized = rawPotionType.toUpperCase(Locale.ROOT);
+
+        // Compatibility aliases for older config names
+        if ("SPEED".equals(normalized)) {
+            normalized = "SWIFTNESS";
+        } else if ("INSTANT_HEAL".equals(normalized)) {
+            normalized = "HEALING";
+        } else if ("INSTANT_DAMAGE".equals(normalized)) {
+            normalized = "HARMING";
+        }
+
+        try {
+            return PotionType.valueOf(normalized);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private boolean isPotionMaterial(Material material) {
+        return material == Material.POTION
+                || material == Material.SPLASH_POTION
+                || material == Material.LINGERING_POTION;
+    }
+
+    private boolean isInteger(String value) {
+        try {
+            Integer.parseInt(value);
+            return true;
+        } catch (NumberFormatException ignored) {
+            return false;
+        }
+    }
+
+    private boolean isBoolean(String value) {
+        return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
     }
 
     private String resolveSelectedKitId(Player player) {

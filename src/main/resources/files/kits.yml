@@ -1,9 +1,10 @@
-file_version: 1
+file_version: 2
 
-default_kit: noob
+default_kit: none
 
 kits:
   order:
+    - none
     - noob
     - leather
     - archer
@@ -25,6 +26,15 @@ kits:
     - knockback
     - pyromaniac
     - troll
+  none:
+    name: "None"
+    icon: BARRIER
+    price: 0
+    enabled: true
+    default_unlocked: true
+    description:
+      - "<gray>Start with no kit items at all.</gray>"
+    items: []
   noob:
     name: "Noob"
     icon: WOODEN_SWORD
@@ -122,7 +132,9 @@ kits:
     description:
       - "<gray>Potions and a sharp blade for stealth.</gray>"
     items:
-      - "POTION:3"
+      # Potion format: MATERIAL:amount[:slot]:POTION_TYPE[:extended[:upgraded]]
+      - "POTION:2:INVISIBILITY:true:false"
+      - "POTION:1:SWIFTNESS:true:false"
       - "DIAMOND_SWORD:1"
       - "LEATHER_HELMET:1:39"
   sniper:
@@ -229,7 +241,7 @@ kits:
       - "<gray>Quick movement and a golden blade.</gray>"
     items:
       - "GOLDEN_SWORD:1"
-      - "POTION:1"
+      - "POTION:1:SWIFTNESS:true:false"
       - "GOLDEN_BOOTS:1:36"
   iceman:
     name: "Ice Man"
