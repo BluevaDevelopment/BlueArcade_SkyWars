@@ -37,7 +37,8 @@ Use these steps to register the arena and attach the module:
 - `/baa game [arena_id] add [minigame]` — Attach this minigame module to the arena.
 - `/baa stick` — Get the setup tool to select regions.
 - `/baa game [arena_id] [minigame] bounds set` — Save the game bounds for this arena.
-- `/baa game [arena_id] [minigame] spawn add` — Add spawn points for players.
+- ~~`/baa game [arena_id] [minigame] spawn add`~~ — Not used in SkyWars.
+  Use **`/baa game [arena_id] skywars team spawn add`** and **`/baa game [arena_id] skywars team spawn set <team_id>`** to configure team spawns.
 - `/baa game [arena_id] [minigame] time [minutes]` — Set the match duration.
 
 ### Module-specific steps
@@ -46,6 +47,7 @@ Finish the setup with the commands below:
 - `/baa game [arena_id] skywars team size <value>` — Set the players per team.
 - `/baa game [arena_id] skywars team spawn add` — Add a spawn point to the next free slot (run once per team).
 - `/baa game [arena_id] skywars team spawn set <team_id>` — Overwrite the spawn point for a specific team (1, 2, ..., N).
+- `/baa game [arena_id] skywars team spawn remove <team_id>` — Remove the spawn point for a specific team (1, 2, ..., N).
 - `/baa game [arena_id] skywars searchchests` — Scan the arena bounds and store chest locations.
 - `/baa game [arena_id] skywars region set` — Select and save the regeneration region.
 

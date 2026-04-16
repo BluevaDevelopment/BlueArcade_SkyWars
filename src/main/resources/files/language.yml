@@ -1,7 +1,7 @@
 # SkyWars Module - English (UK)
 # Only SkyWars-specific content
 
-file_version: 2
+file_version: 3
 display_name: "SkyWars"
 
 description:
@@ -158,10 +158,12 @@ setup_messages:
   team_spawn:
     usage_add: "<red>Usage:</red> <yellow>/baa game <id> skywars team spawn add</yellow>"
     usage_set: "<red>Usage:</red> <yellow>/baa game <id> skywars team spawn set <team_id></yellow>"
+    usage_remove: "<red>Usage:</red> <yellow>/baa game <id> skywars team spawn remove <team_id></yellow>"
     teams_not_configured: "<red>Team count is not configured yet. Set it first with <yellow>/baa game <id> skywars team count <n></yellow>.</red>"
     added: "<green>Team spawn added for slot <white>{slot}/{count}</white> at your current location.</green>"
     all_slots_filled: "<red>All {count} team spawn slots are already filled.</red>"
     set: "<green>Team spawn set for team <white>{team}</white> at your current location.</green>"
+    removed: "<yellow>Team spawn removed for team <white>{team}</white>.</yellow>"
   search_chests:
     missing_bounds: "<red>Game bounds are not configured yet.</red>"
     start: "<yellow>Searching for chests... ({blocks} blocks to scan)</yellow>"

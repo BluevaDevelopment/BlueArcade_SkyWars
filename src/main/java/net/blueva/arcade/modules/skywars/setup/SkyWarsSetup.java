@@ -64,7 +64,7 @@ public class SkyWarsSetup implements GameSetupHandler {
         if (context.getRelativeArgIndex() == 1
                 && "team".equalsIgnoreCase(context.getArg(context.getStartIndex() - 1))
                 && "spawn".equalsIgnoreCase(context.getArg(context.getStartIndex()))) {
-            return TabCompleteResult.of("add", "set");
+            return TabCompleteResult.of("add", "set", "remove");
         }
         if (context.getRelativeArgIndex() == 0
                 && "region".equalsIgnoreCase(context.getArg(context.getStartIndex() - 1))) {
@@ -151,9 +151,46 @@ public class SkyWarsSetup implements GameSetupHandler {
         if ("set".equalsIgnoreCase(action)) {
             return handleTeamSpawnSet(context);
         }
+        if ("remove".equalsIgnoreCase(action)) {
+            return handleTeamSpawnRemove(context);
+        }
 
         context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.usage_add"));
         context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.usage_set"));
+        context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.usage_remove"));
+        return true;
+    }
+
+    private boolean handleTeamSpawnRemove(SetupContext<Player, CommandSender, Location> context) {
+        if (!context.hasHandlerArgs(3)) {
+            context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.usage_remove"));
+            return true;
+        }
+
+        int teamCount = context.getData().getInt("teams.count", 0);
+        if (teamCount <= 0) {
+            context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.teams_not_configured"));
+            return true;
+        }
+
+        String teamId = normalizeTeamId(context.getHandlerArg(2));
+        if (teamId == null) {
+            context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.usage_remove"));
+            sendTeamIdRangeMessage(context);
+            return true;
+        }
+
+        if (!isExistingTeam(context, teamId)) {
+            sendTeamIdRangeMessage(context);
+            return true;
+        }
+
+        String path = "game.play_area.team_spawns." + teamId.toLowerCase();
+        context.getData().remove(path);
+        context.getData().save();
+
+        context.getMessagesAPI().sendRaw(context.getPlayer(), getSetupMessage("team_spawn.removed")
+                .replace("{team}", teamId));
         return true;
     }
 
