@@ -99,6 +99,7 @@ public class LootService {
             return List.of();
         }
 
+        World arenaWorld = context.getArenaAPI() != null ? context.getArenaAPI().getWorld() : null;
         List<String> entries = context.getDataAccess().getGameData("loot.chests.locations", List.class);
         if (entries == null || entries.isEmpty()) {
             return List.of();
@@ -106,7 +107,7 @@ public class LootService {
 
         List<TrackedChest> chests = new ArrayList<>();
         for (String entry : entries) {
-            TrackedChest trackedChest = parseTrackedChest(entry);
+            TrackedChest trackedChest = parseTrackedChest(entry, arenaWorld);
             if (trackedChest != null) {
                 chests.add(trackedChest);
             }
@@ -444,7 +445,7 @@ public class LootService {
         return moduleConfig.getInt("loot.chests.item_count.max", 6);
     }
 
-    private TrackedChest parseTrackedChest(String entry) {
+    private TrackedChest parseTrackedChest(String entry, World fallbackWorld) {
         if (entry == null || entry.isEmpty()) {
             return null;
         }
@@ -469,10 +470,14 @@ public class LootService {
                 material = Material.CHEST;
             }
 
-            Location location = new Location(org.bukkit.Bukkit.getWorld(worldName), x, y, z);
-            if (location.getWorld() == null) {
+            World world = org.bukkit.Bukkit.getWorld(worldName);
+            if (world == null) {
+                world = fallbackWorld;
+            }
+            if (world == null) {
                 return null;
             }
+            Location location = new Location(world, x, y, z);
             return new TrackedChest(location, material);
         } catch (Exception ignored) {
             return null;
