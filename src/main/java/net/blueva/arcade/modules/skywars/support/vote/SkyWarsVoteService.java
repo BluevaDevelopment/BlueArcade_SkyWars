@@ -614,8 +614,8 @@ public class SkyWarsVoteService {
             if (player == null) {
                 continue;
             }
-            if (player.getAttribute(Attribute.MAX_HEALTH) != null) {
-                player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(maxHealth);
+            if (player.getAttribute(maxHealthAttribute()) != null) {
+                player.getAttribute(maxHealthAttribute()).setBaseValue(maxHealth);
             }
             player.setHealth(Math.min(player.getHealth(), maxHealth));
         }
@@ -692,5 +692,13 @@ public class SkyWarsVoteService {
         String label = moduleConfig.getStringFrom("language.yml",
                 "votes.labels.options." + category.getId() + "." + option);
         return label == null ? "" : label;
+    }
+
+    private Attribute maxHealthAttribute() {
+        try {
+            return Attribute.valueOf("MAX_HEALTH");
+        } catch (IllegalArgumentException ignored) {
+            return Attribute.valueOf("GENERIC_MAX_HEALTH");
+        }
     }
 }

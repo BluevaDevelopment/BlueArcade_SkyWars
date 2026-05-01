@@ -618,8 +618,8 @@ public class SkyWarsGame {
             if (player == null) {
                 continue;
             }
-            if (player.getAttribute(Attribute.MAX_HEALTH) != null) {
-                player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(20.0);
+            if (player.getAttribute(maxHealthAttribute()) != null) {
+                player.getAttribute(maxHealthAttribute()).setBaseValue(20.0);
             }
             player.setHealth(Math.min(player.getHealth(), 20.0));
         }
@@ -900,5 +900,13 @@ public class SkyWarsGame {
             }
         }
         return events;
+    }
+
+    private Attribute maxHealthAttribute() {
+        try {
+            return Attribute.valueOf("MAX_HEALTH");
+        } catch (IllegalArgumentException ignored) {
+            return Attribute.valueOf("GENERIC_MAX_HEALTH");
+        }
     }
 }

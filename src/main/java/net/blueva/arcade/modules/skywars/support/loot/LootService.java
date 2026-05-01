@@ -193,7 +193,7 @@ public class LootService {
                 Location particleLocation = location.clone().add(0.5, 1.1, 0.5);
                 Particle particle = currentType == Material.ENDER_CHEST
                         ? Particle.PORTAL
-                        : Particle.HAPPY_VILLAGER;
+                        : happyVillagerParticle();
                 location.getWorld().spawnParticle(particle, particleLocation, 6, 0.2, 0.3, 0.2, 0.01);
             }
         }, 20L, intervalTicks);
@@ -501,6 +501,14 @@ public class LootService {
             }
         }
         return entries.get(entries.size() - 1);
+    }
+
+    private Particle happyVillagerParticle() {
+        try {
+            return Particle.valueOf("HAPPY_VILLAGER");
+        } catch (IllegalArgumentException ignored) {
+            return Particle.VILLAGER_HAPPY;
+        }
     }
 
     private static class LootEntry {

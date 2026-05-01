@@ -123,8 +123,9 @@ public class SpawnCageService {
             return;
         }
 
+        World arenaWorld = context.getArenaAPI() != null ? context.getArenaAPI().getWorld() : null;
         for (String key : cageBlocks.keySet()) {
-            Location location = parseLocation(key);
+            Location location = parseLocation(key, arenaWorld);
             if (location == null) {
                 continue;
             }
@@ -158,7 +159,7 @@ public class SpawnCageService {
         });
     }
 
-    private Location parseLocation(String key) {
+    private Location parseLocation(String key, World fallbackWorld) {
         if (key == null) {
             return null;
         }
@@ -167,6 +168,9 @@ public class SpawnCageService {
             return null;
         }
         World world = Bukkit.getWorld(parts[0]);
+        if (world == null) {
+            world = fallbackWorld;
+        }
         if (world == null) {
             return null;
         }
