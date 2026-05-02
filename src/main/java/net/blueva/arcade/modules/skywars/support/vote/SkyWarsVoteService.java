@@ -610,12 +610,13 @@ public class SkyWarsVoteService {
 
     private void applyHearts(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context, int hearts) {
         double maxHealth = Math.max(2.0, hearts * 2.0);
+        Attribute maxHealthAttribute = maxHealthAttribute();
         for (Player player : context.getPlayers()) {
             if (player == null) {
                 continue;
             }
-            if (player.getAttribute(maxHealthAttribute()) != null) {
-                player.getAttribute(maxHealthAttribute()).setBaseValue(maxHealth);
+            if (maxHealthAttribute != null && player.getAttribute(maxHealthAttribute) != null) {
+                player.getAttribute(maxHealthAttribute).setBaseValue(maxHealth);
             }
             player.setHealth(Math.min(player.getHealth(), maxHealth));
         }
@@ -695,10 +696,16 @@ public class SkyWarsVoteService {
     }
 
     private Attribute maxHealthAttribute() {
+        Attribute attribute = attributeConstant("MAX_HEALTH");
+        return attribute != null ? attribute : attributeConstant("GENERIC_MAX_HEALTH");
+    }
+
+    private Attribute attributeConstant(String fieldName) {
         try {
-            return Attribute.valueOf("MAX_HEALTH");
-        } catch (IllegalArgumentException ignored) {
-            return Attribute.valueOf("GENERIC_MAX_HEALTH");
+            Object value = Attribute.class.getField(fieldName).get(null);
+            return value instanceof Attribute attribute ? attribute : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
         }
     }
 }
