@@ -1,7 +1,7 @@
 # SkyWars Module - English (UK)
 # Only SkyWars-specific content
 
-file_version: 3
+file_version: 4
 display_name: "SkyWars"
 
 description:
@@ -48,7 +48,7 @@ votes:
         sunny: "Sunny"
         rainy: "Rainy"
   messages:
-    broadcast: "<yellow>{player}</yellow> <gray>picked</gray> <aqua>{category}</aqua> <dark_gray>→</dark_gray> <white>{option}</white>"
+    broadcast: "<yellow>{player}</yellow> <gray>picked</gray> <aqua>{category}</aqua> <dark_gray>→</dark_gray> <white>{option}</white> <yellow>({votes} votes)</yellow>"
     selected:
       sources:
         popular: "by popular vote"

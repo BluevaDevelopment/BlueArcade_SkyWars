@@ -149,6 +149,7 @@ public class SkyWarsModule implements GameModule<Player, Location, World, Materi
             menuAPI.unregisterModuleMenuAPI(moduleInfo.getId());
         }
         if (itemAPI != null) {
+            itemAPI.unregisterWaitingItem("skywars_vote_settings");
             itemAPI.unregisterClickHandler("skywars_vote_settings");
         }
     }

@@ -32,6 +32,7 @@ import java.util.Set;
 public class SkyWarsVoteService {
 
     private static final String VOTE_PERMISSION_BASE = "bluearcade.skywars.votes";
+    private static final String WAITING_ITEM_ID = "skywars_vote_settings";
     public static final String COMMAND = "skywarsvote";
     public static final String MENU_MAIN = "vote_main";
     public static final String MENU_CHESTS = "vote_chests";
@@ -120,8 +121,8 @@ public class SkyWarsVoteService {
             return;
         }
 
-        boolean enabled = moduleConfig.getBoolean("waiting_items.vote_settings.enabled", true);
-        if (!enabled) {
+        if (!isWaitingItemEnabled()) {
+            unregisterWaitingItem();
             return;
         }
 
@@ -139,7 +140,7 @@ public class SkyWarsVoteService {
 
         // Register item with empty actions (we use custom click handler instead)
         LobbyItemDefinition<Material> definition = new LobbyItemDefinition<>(
-                "skywars_vote_settings",
+                WAITING_ITEM_ID,
                 material,
                 slot,
                 displayName,
@@ -159,8 +160,27 @@ public class SkyWarsVoteService {
      * @param game SkyWarsGame instance
      */
     public void registerClickHandler(SkyWarsGame game) {
-        itemAPI.registerClickHandler("skywars_vote_settings",
+        if (itemAPI == null) {
+            return;
+        }
+        if (!isWaitingItemEnabled()) {
+            itemAPI.unregisterClickHandler(WAITING_ITEM_ID);
+            return;
+        }
+        itemAPI.registerClickHandler(WAITING_ITEM_ID,
                 player -> game.handleVoteCommand(player, new String[]{"menu", "main"}));
+    }
+
+    public void unregisterWaitingItem() {
+        if (itemAPI == null) {
+            return;
+        }
+        itemAPI.unregisterWaitingItem(WAITING_ITEM_ID);
+        itemAPI.unregisterClickHandler(WAITING_ITEM_ID);
+    }
+
+    private boolean isWaitingItemEnabled() {
+        return moduleConfig != null && moduleConfig.getBoolean("waiting_items.vote_settings.enabled", true);
     }
 
     public boolean handleVoteCommand(Player player,
@@ -210,15 +230,10 @@ public class SkyWarsVoteService {
             }
 
             voteState.castVote(player.getUniqueId(), category, option);
-            String categoryLabel = getCategoryLabel(category);
-            String optionLabel = getOptionLabel(category, option);
-            String message = moduleConfig.getStringFrom("language.yml", "votes.messages.broadcast");
-            if (message == null || message.isBlank()) {
+            String message = voteBroadcastMessage(player, category, option, voteState);
+            if (message.isBlank()) {
                 return true;
             }
-            message = message.replace("{player}", player.getName())
-                    .replace("{category}", categoryLabel)
-                    .replace("{option}", optionLabel);
             broadcastMessage(context, message);
             return true;
         }
@@ -259,7 +274,7 @@ public class SkyWarsVoteService {
             }
 
             waitingVoteState.castVote(player.getUniqueId(), category, option);
-            broadcastWaitingVote(player, category, option);
+            broadcastWaitingVote(player, category, option, waitingVoteState);
             return openMenuWithDefaults(player, waitingVoteState, new String[]{"menu", "main"});
         }
 
@@ -461,24 +476,19 @@ public class SkyWarsVoteService {
         }
     }
 
-    private void broadcastWaitingVote(Player player, VoteCategory category, String option) {
+    private void broadcastWaitingVote(Player player, VoteCategory category, String option, VoteState voteState) {
         if (player == null || category == null || option == null) {
             return;
         }
-        String categoryLabel = getCategoryLabel(category);
-        String optionLabel = getOptionLabel(category, option);
-        String message = moduleConfig.getStringFrom("language.yml", "votes.messages.broadcast");
-        if (message == null || message.isBlank()) {
+        String message = voteBroadcastMessage(player, category, option, voteState);
+        if (message.isBlank()) {
             return;
         }
-        message = message.replace("{player}", player.getName())
-                .replace("{category}", categoryLabel)
-                .replace("{option}", optionLabel);
 
         GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context = getGameContext(player);
         if (context == null) {
             if (isPlayerInWaitingArena(player)) {
-                sendWaitingBroadcast(player, message);
+                broadcastToWaitingArena(player, message);
             }
             return;
         }
@@ -511,6 +521,37 @@ public class SkyWarsVoteService {
             messagesAPI.sendRaw(player, message);
         } else {
             player.sendMessage(message);
+        }
+    }
+
+    private void broadcastToWaitingArena(Player sender, String message) {
+        if (sender == null || message == null || message.isBlank()) {
+            return;
+        }
+        @SuppressWarnings("unchecked")
+        PlayerUtil<Player> playerUtil = (PlayerUtil<Player>) ModuleAPI.getPlayerUtil();
+        if (playerUtil == null) {
+            return;
+        }
+        Integer senderArenaId = playerUtil.getPlayerArena(sender);
+        if (senderArenaId == null) {
+            return;
+        }
+        @SuppressWarnings("unchecked")
+        MessageAPI<Player> messagesAPI = (MessageAPI<Player>) ModuleAPI.getMessagesAPI();
+        for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (online == null || !online.isOnline()) {
+                continue;
+            }
+            Integer onlineArenaId = playerUtil.getPlayerArena(online);
+            if (!senderArenaId.equals(onlineArenaId)) {
+                continue;
+            }
+            if (messagesAPI != null) {
+                messagesAPI.sendRaw(online, message);
+            } else {
+                online.sendMessage(message);
+            }
         }
     }
 
@@ -676,6 +717,18 @@ public class SkyWarsVoteService {
             case TIME -> normalizeOption(moduleConfig.getString("votes.defaults.time", "day"), TIME_OPTIONS, "day");
             case WEATHER -> normalizeOption(moduleConfig.getString("votes.defaults.weather", "sunny"), WEATHER_OPTIONS, "sunny");
         };
+    }
+
+    private String voteBroadcastMessage(Player player, VoteCategory category, String option, VoteState voteState) {
+        String message = moduleConfig.getStringFrom("language.yml", "votes.messages.broadcast", "");
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+        int voteCount = voteState != null ? voteState.getVotes(category, option) : 0;
+        return message.replace("{player}", player.getName())
+                .replace("{category}", getCategoryLabel(category))
+                .replace("{option}", getOptionLabel(category, option))
+                .replace("{votes}", String.valueOf(voteCount));
     }
 
     private String getCategoryLabel(VoteCategory category) {
