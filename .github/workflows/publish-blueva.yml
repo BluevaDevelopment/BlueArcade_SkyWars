@@ -15,7 +15,7 @@ jobs:
 
     env:
       BLUEVA_UPDATE_URL: "https://blueva.net/api/v2/resources/update"
-      BLUEVA_INTERNAL_ID: "skywars
+      BLUEVA_INTERNAL_ID: "skywars"
       BLUEVA_CHANNEL_ID_MINECRAFT: "minecraft"
 
     steps:
