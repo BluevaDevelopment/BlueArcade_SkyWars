@@ -13,6 +13,7 @@ import net.blueva.arcade.api.ui.menu.MenuDefinition;
 import net.blueva.arcade.modules.skywars.game.SkyWarsGame;
 import net.blueva.arcade.modules.skywars.state.ArenaState;
 import net.blueva.arcade.modules.skywars.state.VoteState;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -23,11 +24,14 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SkyWarsVoteService {
 
@@ -50,7 +54,7 @@ public class SkyWarsVoteService {
     private final ItemAPI<Player, ItemStack, Material> itemAPI;
     private final String moduleId;
     private final SkyWarsVoteMenuRepository menuRepository;
-    private final VoteState waitingVoteState;
+    private final Map<Integer, VoteState> waitingVoteStates = new ConcurrentHashMap<>();
     private SkyWarsGame game;
 
     public SkyWarsVoteService(ModuleConfigAPI moduleConfig,
@@ -64,7 +68,6 @@ public class SkyWarsVoteService {
         this.menuRepository = new SkyWarsVoteMenuRepository(moduleConfig);
         this.menuRepository.loadMenus();
         registerMenusWithCore();
-        this.waitingVoteState = createVoteState();
     }
 
     /**
@@ -84,8 +87,66 @@ public class SkyWarsVoteService {
         return new VoteState(defaults);
     }
 
-    public VoteState getWaitingVoteState() {
-        return waitingVoteState;
+    public VoteState getWaitingVoteState(int arenaId) {
+        return waitingVoteStates.computeIfAbsent(arenaId, id -> createVoteState());
+    }
+
+    public void clearWaitingVote(int arenaId, UUID playerId) {
+        VoteState state = waitingVoteStates.get(arenaId);
+        if (state == null) {
+            return;
+        }
+        state.clearPlayerVotes(playerId);
+        if (state.getVoterIds().isEmpty()) {
+            waitingVoteStates.remove(arenaId);
+        }
+    }
+
+    public void cleanStaleVotes() {
+        @SuppressWarnings("unchecked")
+        PlayerUtil<Player> playerUtil = (PlayerUtil<Player>) ModuleAPI.getPlayerUtil();
+        if (playerUtil == null) {
+            return;
+        }
+
+        for (Map.Entry<Integer, VoteState> entry : new ArrayList<>(waitingVoteStates.entrySet())) {
+            cleanStaleVotesForArena(entry.getValue(), entry.getKey());
+            if (entry.getValue().getVoterIds().isEmpty()) {
+                waitingVoteStates.remove(entry.getKey());
+            }
+        }
+    }
+
+    private void cleanStaleVotesForArena(VoteState state, int arenaId) {
+        @SuppressWarnings("unchecked")
+        PlayerUtil<Player> playerUtil = (PlayerUtil<Player>) ModuleAPI.getPlayerUtil();
+        if (playerUtil == null || state == null) {
+            return;
+        }
+
+        for (UUID playerId : new ArrayList<>(state.getVoterIds())) {
+            Player player = Bukkit.getPlayer(playerId);
+            if (player == null || !player.isOnline()) {
+                state.clearPlayerVotes(playerId);
+                continue;
+            }
+            Integer playerArena = playerUtil.getPlayerArena(player);
+            if (playerArena == null || playerArena != arenaId) {
+                state.clearPlayerVotes(playerId);
+            }
+        }
+    }
+
+    private Integer getPlayerArenaId(Player player) {
+        if (player == null) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        PlayerUtil<Player> playerUtil = (PlayerUtil<Player>) ModuleAPI.getPlayerUtil();
+        if (playerUtil == null) {
+            return null;
+        }
+        return playerUtil.getPlayerArena(player);
     }
 
     public void setGame(SkyWarsGame game) {
@@ -101,19 +162,22 @@ public class SkyWarsVoteService {
             return;
         }
 
+        int arenaId = state.getContext().getArenaId();
+        VoteState waiting = getWaitingVoteState(arenaId);
+        cleanStaleVotesForArena(waiting, arenaId);
+
         for (Player player : players) {
             if (player == null) {
                 continue;
             }
             for (VoteCategory category : VoteCategory.values()) {
-                String option = waitingVoteState.getPlayerVote(player.getUniqueId(), category);
+                String option = waiting.getPlayerVote(player.getUniqueId(), category);
                 if (option != null) {
                     voteState.castVote(player.getUniqueId(), category, option);
                 }
             }
-            waitingVoteState.clearPlayerVotes(player.getUniqueId());
         }
-        waitingVoteState.clearAll();
+        waitingVoteStates.remove(arenaId);
     }
 
     public void registerWaitingItem() {
@@ -246,14 +310,22 @@ public class SkyWarsVoteService {
             return false;
         }
 
+        Integer arenaId = getPlayerArenaId(player);
+        if (arenaId == null) {
+            return true;
+        }
+
+        VoteState waiting = getWaitingVoteState(arenaId);
+        cleanStaleVotesForArena(waiting, arenaId);
+
         String[] safeArgs = args != null ? args : new String[0];
         if (safeArgs.length == 0) {
-            return openMenuWithDefaults(player, waitingVoteState, safeArgs);
+            return openMenuWithDefaults(player, waiting, safeArgs);
         }
 
         String action = safeArgs[0].toLowerCase(Locale.ROOT);
         if (action.equals("menu")) {
-            return openMenuWithDefaults(player, waitingVoteState, safeArgs);
+            return openMenuWithDefaults(player, waiting, safeArgs);
         }
 
         if (action.equals("vote")) {
@@ -273,9 +345,9 @@ public class SkyWarsVoteService {
                 return true;
             }
 
-            waitingVoteState.castVote(player.getUniqueId(), category, option);
-            broadcastWaitingVote(player, category, option, waitingVoteState);
-            return openMenuWithDefaults(player, waitingVoteState, new String[]{"menu", "main"});
+            waiting.castVote(player.getUniqueId(), category, option);
+            broadcastWaitingVote(player, category, option, waiting);
+            return openMenuWithDefaults(player, waiting, new String[]{"menu", "main"});
         }
 
         return false;
@@ -332,23 +404,30 @@ public class SkyWarsVoteService {
      * @return true if menu was opened
      */
     public boolean openMenuWithDefaults(Player player, String[] args) {
-        return openMenuWithDefaults(player, waitingVoteState, args);
+        Integer arenaId = getPlayerArenaId(player);
+        if (arenaId == null) {
+            return openMenu(player, createVoteState(), resolveMenuId(args));
+        }
+        VoteState waiting = getWaitingVoteState(arenaId);
+        cleanStaleVotesForArena(waiting, arenaId);
+        return openMenu(player, waiting, resolveMenuId(args));
     }
 
     public boolean openMenuWithDefaults(Player player, VoteState voteState, String[] args) {
         if (menuAPI == null || player == null) {
             return false;
         }
+        return openMenu(player, voteState, resolveMenuId(args));
+    }
 
-        // Determine which menu to open
+    private String resolveMenuId(String[] args) {
         String menuId = MENU_MAIN;
         if (args != null && args.length > 0) {
             if (args[0].equalsIgnoreCase("menu") && args.length > 1) {
                 menuId = mapMenuId(args[1]);
             }
         }
-
-        return openMenu(player, voteState, menuId);
+        return menuId;
     }
 
     public boolean openMenu(Player player, ArenaState state, String menuId) {
@@ -700,11 +779,14 @@ public class SkyWarsVoteService {
 
     private String resolvePlayerVoteLabel(Player player, VoteState voteState, VoteCategory category) {
         if (player == null || voteState == null) {
-            return "-";
+            return getOptionLabel(category, defaultOption(category));
         }
         String vote = voteState.getPlayerVote(player.getUniqueId(), category);
         if (vote == null) {
-            return "-";
+            vote = voteState.resolveWinner(category);
+        }
+        if (vote == null) {
+            vote = defaultOption(category);
         }
         String label = getOptionLabel(category, vote);
         return label == null || label.isBlank() ? "-" : label;

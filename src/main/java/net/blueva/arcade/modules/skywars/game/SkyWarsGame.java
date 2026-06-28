@@ -3,6 +3,7 @@ package net.blueva.arcade.modules.skywars.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import net.blueva.arcade.api.ModuleAPI;
 import net.blueva.arcade.api.config.CoreConfigAPI;
 import net.blueva.arcade.api.config.ModuleConfigAPI;
 import net.blueva.arcade.api.game.GameContext;
@@ -12,7 +13,9 @@ import net.blueva.arcade.api.stats.StatsAPI;
 import net.blueva.arcade.api.store.StoreAPI;
 import net.blueva.arcade.api.team.TeamInfo;
 import net.blueva.arcade.api.team.TeamsAPI;
+import net.blueva.arcade.api.utils.PlayerUtil;
 import net.blueva.arcade.modules.skywars.state.ArenaState;
+import net.blueva.arcade.modules.skywars.state.VoteState;
 import net.blueva.arcade.modules.skywars.support.DescriptionService;
 import net.blueva.arcade.modules.skywars.support.PlaceholderService;
 import net.blueva.arcade.modules.skywars.support.combat.CombatService;
@@ -455,6 +458,35 @@ public class SkyWarsGame {
 
     public Map<String, String> getPlaceholders(Player player) {
         return placeholderService.buildPlaceholders(player);
+    }
+
+    public void onPlayerQuit(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        PlayerUtil<Player> playerUtil = (PlayerUtil<Player>) ModuleAPI.getPlayerUtil();
+        Integer waitingArenaId = playerUtil != null ? playerUtil.getPlayerArena(player) : null;
+        if (waitingArenaId == null) {
+            waitingArenaId = playerArena.get(player);
+        }
+        if (voteService != null && waitingArenaId != null) {
+            voteService.clearWaitingVote(waitingArenaId, player.getUniqueId());
+        }
+
+        Integer activeArenaId = playerArena.get(player);
+        if (activeArenaId != null) {
+            ArenaState state = arenas.get(activeArenaId);
+            if (state != null) {
+                VoteState voteState = state.getVoteState();
+                if (voteState != null) {
+                    voteState.clearPlayerVotes(player.getUniqueId());
+                }
+            }
+        }
+
+        playerArena.remove(player);
     }
 
     public boolean handleVoteCommand(Player player, String[] args) {
