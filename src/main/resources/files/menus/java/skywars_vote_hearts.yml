@@ -1,14 +1,21 @@
-file_version: 1
+#  ____  _               _                      _
+# | __ )| |_   _  ___   / \   _ __ ___ __ _  __| | ___
+# |  _ \| | | | |/ _ \ / _ \ | '__/ __/ _` |/ _` |/ _ \
+# | |_) | | |_| |  __// ___ \| | | (_| (_| | (_| |  __/
+# |____/|_|\__,_|\___/_/   \_|_|  \___\__,_|\__,_|\___|
+#
+# [!] Arcade by Blueva | https://blueva.net/store/blue-arcade [!]
+
 menuName: '<red>Vote hearts</red>'
 menuSize: 27
-type: CHEST
+type: "CHEST"
 
 items:
   hearts_10:
     slot: 10
     name: '<white>10 hearts</white>'
     itemStack:
-      material: REDSTONE
+      material: "REDSTONE"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_hearts_10}</white>'
@@ -21,7 +28,7 @@ items:
     slot: 13
     name: '<yellow>20 hearts</yellow>'
     itemStack:
-      material: GOLDEN_APPLE
+      material: "GOLDEN_APPLE"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_hearts_20}</white>'
@@ -34,7 +41,7 @@ items:
     slot: 16
     name: '<light_purple>30 hearts</light_purple>'
     itemStack:
-      material: ENCHANTED_GOLDEN_APPLE
+      material: "ENCHANTED_GOLDEN_APPLE"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_hearts_30}</white>'
@@ -47,7 +54,7 @@ items:
     slot: 22
     name: '<gray>Back</gray>'
     itemStack:
-      material: ARROW
+      material: "ARROW"
       amount: 1
     lore:
       - '<gray>Return to settings.</gray>'

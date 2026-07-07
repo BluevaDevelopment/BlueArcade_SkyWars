@@ -1,14 +1,21 @@
-file_version: 1
+#  ____  _               _                      _
+# | __ )| |_   _  ___   / \   _ __ ___ __ _  __| | ___
+# |  _ \| | | | |/ _ \ / _ \ | '__/ __/ _` |/ _` |/ _ \
+# | |_) | | |_| |  __// ___ \| | | (_| (_| | (_| |  __/
+# |____/|_|\__,_|\___/_/   \_|_|  \___\__,_|\__,_|\___|
+#
+# [!] Arcade by Blueva | https://blueva.net/store/blue-arcade [!]
+
 menuName: '<yellow>Vote time</yellow>'
 menuSize: 27
-type: CHEST
+type: "CHEST"
 
 items:
   day:
     slot: 10
     name: '<yellow>Day</yellow>'
     itemStack:
-      material: SUNFLOWER
+      material: "SUNFLOWER"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_time_day}</white>'
@@ -21,7 +28,7 @@ items:
     slot: 12
     name: '<gold>Sunset</gold>'
     itemStack:
-      material: ORANGE_DYE
+      material: "ORANGE_DYE"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_time_sunset}</white>'
@@ -34,7 +41,7 @@ items:
     slot: 14
     name: '<blue>Night</blue>'
     itemStack:
-      material: END_ROD
+      material: "END_ROD"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_time_night}</white>'
@@ -47,7 +54,7 @@ items:
     slot: 16
     name: '<yellow>Sunrise</yellow>'
     itemStack:
-      material: YELLOW_DYE
+      material: "YELLOW_DYE"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_time_sunrise}</white>'
@@ -60,7 +67,7 @@ items:
     slot: 22
     name: '<gray>Back</gray>'
     itemStack:
-      material: ARROW
+      material: "ARROW"
       amount: 1
     lore:
       - '<gray>Return to settings.</gray>'

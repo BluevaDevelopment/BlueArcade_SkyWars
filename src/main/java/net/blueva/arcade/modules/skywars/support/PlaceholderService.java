@@ -44,17 +44,17 @@ public class PlaceholderService {
                 TeamInfo<Player, Material> team = teamsAPI.getTeam(player);
                 placeholders.put("team", team != null ? team.getDisplayName() : "-");
             } else {
-                String teamLabel = moduleConfig.getStringFrom("language.yml", "scoreboard.solo_team_label");
+                String teamLabel = moduleConfig.getTranslation(player, "scoreboard.solo_team_label");
                 placeholders.put("team", teamLabel == null ? "" : teamLabel);
             }
 
             ArenaState state = game.getArenaState(context);
             if (state != null) {
                 placeholders.put("storm_radius", String.valueOf((int) Math.ceil(state.getStormRadius())));
-                placeholders.put("storm_stage", resolveStormPhaseLabel(state));
+                placeholders.put("storm_stage", resolveStormPhaseLabel(player, state));
                 placeholders.put("storm_status", resolveStormStatus(player, state));
-                placeholders.put("next_event", resolveNextEventLabel(state));
-                placeholders.put("next_event_time", resolveNextEventTime(state));
+                placeholders.put("next_event", resolveNextEventLabel(player, state));
+                placeholders.put("next_event_time", resolveNextEventTime(player, state));
             }
         }
 
@@ -63,17 +63,17 @@ public class PlaceholderService {
 
     private String resolveStormStatus(Player player, ArenaState state) {
         if (player == null || state == null) {
-            String safe = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_status.safe");
+            String safe = moduleConfig.getTranslation(player, "scoreboard.storm_status.safe");
             return safe == null ? "" : safe;
         }
 
         if (!state.isStormActive() || state.getStormCenter() == null || state.getStormRadius() <= 0) {
-            String safe = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_status.safe");
+            String safe = moduleConfig.getTranslation(player, "scoreboard.storm_status.safe");
             return safe == null ? "" : safe;
         }
 
         if (player.getWorld() == null || !player.getWorld().equals(state.getStormCenter().getWorld())) {
-            String safe = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_status.safe");
+            String safe = moduleConfig.getTranslation(player, "scoreboard.storm_status.safe");
             return safe == null ? "" : safe;
         }
 
@@ -82,53 +82,53 @@ public class PlaceholderService {
         double distanceSquared = (dx * dx) + (dz * dz);
         double radius = state.getStormRadius();
         if (distanceSquared <= radius * radius) {
-            String safe = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_status.safe");
+            String safe = moduleConfig.getTranslation(player, "scoreboard.storm_status.safe");
             return safe == null ? "" : safe;
         }
 
-        String unsafe = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_status.unsafe");
+        String unsafe = moduleConfig.getTranslation(player, "scoreboard.storm_status.unsafe");
         return unsafe == null ? "" : unsafe;
     }
 
-    private String resolveStormPhaseLabel(ArenaState state) {
+    private String resolveStormPhaseLabel(Player player, ArenaState state) {
         if (state == null || !state.isStormActive()) {
-            String waiting = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_phase.waiting");
+            String waiting = moduleConfig.getTranslation(player, "scoreboard.storm_phase.waiting");
             return waiting == null ? "" : waiting;
         }
-        String finalPhase = moduleConfig.getStringFrom("language.yml", "scoreboard.storm_phase.final");
+        String finalPhase = moduleConfig.getTranslation(player, "scoreboard.storm_phase.final");
         return finalPhase == null ? "" : finalPhase;
     }
 
-    private String resolveNextEventLabel(ArenaState state) {
+    private String resolveNextEventLabel(Player player, ArenaState state) {
         if (state == null) {
-            String none = moduleConfig.getStringFrom("language.yml", "scoreboard.event.none");
+            String none = moduleConfig.getTranslation(player, "scoreboard.event.none");
             return none == null ? "" : none;
         }
         ArenaState.ScheduledEvent event = state.getNextEvent();
         if (event == null) {
-            String none = moduleConfig.getStringFrom("language.yml", "scoreboard.event.none");
+            String none = moduleConfig.getTranslation(player, "scoreboard.event.none");
             return none == null ? "" : none;
         }
         String label = event.getLabel();
         if (label == null || label.isBlank()) {
-            String none = moduleConfig.getStringFrom("language.yml", "scoreboard.event.none");
+            String none = moduleConfig.getTranslation(player, "scoreboard.event.none");
             return none == null ? "" : none;
         }
         return label;
     }
 
-    private String resolveNextEventTime(ArenaState state) {
+    private String resolveNextEventTime(Player player, ArenaState state) {
         if (state == null) {
-            String noneTime = moduleConfig.getStringFrom("language.yml", "scoreboard.event.none_time");
+            String noneTime = moduleConfig.getTranslation(player, "scoreboard.event.none_time");
             return noneTime == null ? "" : noneTime;
         }
         int seconds = state.getSecondsUntilNextEvent();
         if (seconds < 0) {
-            String noneTime = moduleConfig.getStringFrom("language.yml", "scoreboard.event.none_time");
+            String noneTime = moduleConfig.getTranslation(player, "scoreboard.event.none_time");
             return noneTime == null ? "" : noneTime;
         }
         if (seconds <= 0) {
-            String now = moduleConfig.getStringFrom("language.yml", "scoreboard.event.now");
+            String now = moduleConfig.getTranslation(player, "scoreboard.event.now");
             return now == null ? "" : now;
         }
         return formatTime(seconds);
@@ -137,7 +137,7 @@ public class PlaceholderService {
     private String formatTime(int seconds) {
         int minutes = Math.max(0, seconds) / 60;
         int remainingSeconds = Math.max(0, seconds) % 60;
-        return String.format("%d:%02d", minutes, remainingSeconds);
+        return String.format("%02d:%02d", minutes, remainingSeconds);
     }
 
     public List<Player> getPlayersSortedByKills(

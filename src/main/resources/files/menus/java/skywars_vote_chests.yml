@@ -1,14 +1,21 @@
-file_version: 1
+#  ____  _               _                      _
+# | __ )| |_   _  ___   / \   _ __ ___ __ _  __| | ___
+# |  _ \| | | | |/ _ \ / _ \ | '__/ __/ _` |/ _` |/ _ \
+# | |_) | | |_| |  __// ___ \| | | (_| (_| | (_| |  __/
+# |____/|_|\__,_|\___/_/   \_|_|  \___\__,_|\__,_|\___|
+#
+# [!] Arcade by Blueva | https://blueva.net/store/blue-arcade [!]
+
 menuName: '<gold>Vote chest loot</gold>'
 menuSize: 27
-type: CHEST
+type: "CHEST"
 
 items:
   basic:
     slot: 10
     name: '<white>Basic chests</white>'
     itemStack:
-      material: CHEST
+      material: "CHEST"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_chests_basic}</white>'
@@ -21,7 +28,7 @@ items:
     slot: 13
     name: '<yellow>Normal chests</yellow>'
     itemStack:
-      material: TRAPPED_CHEST
+      material: "TRAPPED_CHEST"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_chests_normal}</white>'
@@ -34,7 +41,7 @@ items:
     slot: 16
     name: '<red>Overpowered chests</red>'
     itemStack:
-      material: ENDER_CHEST
+      material: "ENDER_CHEST"
       amount: 1
     lore:
       - '<gray>Votes:</gray> <white>{votes_chests_overpowered}</white>'
@@ -47,7 +54,7 @@ items:
     slot: 22
     name: '<gray>Back</gray>'
     itemStack:
-      material: ARROW
+      material: "ARROW"
       amount: 1
     lore:
       - '<gray>Return to settings.</gray>'

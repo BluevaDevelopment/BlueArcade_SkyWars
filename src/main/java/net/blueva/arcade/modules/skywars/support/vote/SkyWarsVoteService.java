@@ -497,7 +497,7 @@ public class SkyWarsVoteService {
                              String path,
                              VoteCategory category,
                              String option) {
-        String message = moduleConfig.getStringFrom("language.yml", path, "");
+        String message = moduleConfig.getTranslation(player, path);
         if (message == null || message.isBlank()) {
             return;
         }
@@ -518,7 +518,7 @@ public class SkyWarsVoteService {
         if (player == null) {
             return;
         }
-        String message = moduleConfig.getStringFrom("language.yml", path, "");
+        String message = moduleConfig.getTranslation(player, path);
         if (message == null || message.isBlank()) {
             return;
         }
@@ -647,8 +647,8 @@ public class SkyWarsVoteService {
         String sourceKey = voteState.hasVotes(category)
                 ? "votes.messages.selected.sources.popular"
                 : "votes.messages.selected.sources.default";
-        String source = moduleConfig.getStringFrom("language.yml", sourceKey);
-        String message = moduleConfig.getStringFrom("language.yml", messagePath, "");
+        String source = moduleConfig.getTranslation(null, sourceKey);
+        String message = moduleConfig.getTranslation(null, messagePath);
         if (message == null || message.isBlank()) {
             return;
         }
@@ -802,7 +802,7 @@ public class SkyWarsVoteService {
     }
 
     private String voteBroadcastMessage(Player player, VoteCategory category, String option, VoteState voteState) {
-        String message = moduleConfig.getStringFrom("language.yml", "votes.messages.broadcast", "");
+        String message = moduleConfig.getTranslation(player, "votes.messages.broadcast");
         if (message == null || message.isBlank()) {
             return "";
         }
@@ -817,7 +817,7 @@ public class SkyWarsVoteService {
         if (category == null) {
             return "";
         }
-        String label = moduleConfig.getStringFrom("language.yml", "votes.labels.categories." + category.getId());
+        String label = moduleConfig.getTranslation(null, "votes.labels.categories." + category.getId());
         return label == null ? "" : label;
     }
 
@@ -825,8 +825,7 @@ public class SkyWarsVoteService {
         if (category == null || option == null) {
             return "";
         }
-        String label = moduleConfig.getStringFrom("language.yml",
-                "votes.labels.options." + category.getId() + "." + option);
+        String label = moduleConfig.getTranslation(null, "votes.labels.options." + category.getId() + "." + option);
         return label == null ? "" : label;
     }
 
