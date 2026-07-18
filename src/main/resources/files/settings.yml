@@ -23,6 +23,8 @@ waiting_items:
       - "<gray>Choose chest loot, hearts, time, and weather.</gray>"
 
 votes:
+  # Seconds a player must wait between votes (0 to disable)
+  cooldown_seconds: 5
   defaults:
     chests: "normal"
     hearts: "10"

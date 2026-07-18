@@ -55,6 +55,7 @@ public class SkyWarsVoteService {
     private final String moduleId;
     private final SkyWarsVoteMenuRepository menuRepository;
     private final Map<Integer, VoteState> waitingVoteStates = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> voteCooldowns = new ConcurrentHashMap<>();
     private SkyWarsGame game;
 
     public SkyWarsVoteService(ModuleConfigAPI moduleConfig,
@@ -92,6 +93,7 @@ public class SkyWarsVoteService {
     }
 
     public void clearWaitingVote(int arenaId, UUID playerId) {
+        voteCooldowns.remove(playerId);
         VoteState state = waitingVoteStates.get(arenaId);
         if (state == null) {
             return;
@@ -176,6 +178,7 @@ public class SkyWarsVoteService {
                     voteState.castVote(player.getUniqueId(), category, option);
                 }
             }
+            voteCooldowns.remove(player.getUniqueId());
         }
         waitingVoteStates.remove(arenaId);
     }
@@ -293,7 +296,18 @@ public class SkyWarsVoteService {
                 return true;
             }
 
+            long cooldownRemaining = getRemainingVoteCooldownSeconds(player.getUniqueId());
+            if (cooldownRemaining > 0) {
+                String message = moduleConfig.getTranslation(player, "votes.messages.cooldown");
+                if (message != null && !message.isBlank()) {
+                    context.getMessagesAPI().sendRaw(player,
+                            message.replace("{time}", String.valueOf(cooldownRemaining)));
+                }
+                return true;
+            }
+
             voteState.castVote(player.getUniqueId(), category, option);
+            voteCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
             String message = voteBroadcastMessage(player, category, option, voteState);
             if (message.isBlank()) {
                 return true;
@@ -345,7 +359,17 @@ public class SkyWarsVoteService {
                 return true;
             }
 
+            long cooldownRemaining = getRemainingVoteCooldownSeconds(player.getUniqueId());
+            if (cooldownRemaining > 0) {
+                String message = moduleConfig.getTranslation(player, "votes.messages.cooldown");
+                if (message != null && !message.isBlank()) {
+                    sendWaitingBroadcast(player, message.replace("{time}", String.valueOf(cooldownRemaining)));
+                }
+                return openMenuWithDefaults(player, waiting, new String[]{"menu", "main"});
+            }
+
             waiting.castVote(player.getUniqueId(), category, option);
+            voteCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
             broadcastWaitingVote(player, category, option, waiting);
             return openMenuWithDefaults(player, waiting, new String[]{"menu", "main"});
         }
@@ -678,6 +702,33 @@ public class SkyWarsVoteService {
             case TIME -> TIME_OPTIONS.contains(option);
             case WEATHER -> WEATHER_OPTIONS.contains(option);
         };
+    }
+
+    private long getVoteCooldownMillis() {
+        if (moduleConfig == null) {
+            return 0;
+        }
+        int seconds = moduleConfig.getInt("votes.cooldown_seconds", 5);
+        return seconds <= 0 ? 0 : seconds * 1000L;
+    }
+
+    private long getRemainingVoteCooldownSeconds(UUID playerId) {
+        if (playerId == null) {
+            return 0;
+        }
+        long cooldownMillis = getVoteCooldownMillis();
+        if (cooldownMillis <= 0) {
+            return 0;
+        }
+        Long lastVote = voteCooldowns.get(playerId);
+        if (lastVote == null) {
+            return 0;
+        }
+        long remainingMillis = cooldownMillis - (System.currentTimeMillis() - lastVote);
+        if (remainingMillis <= 0) {
+            return 0;
+        }
+        return (remainingMillis + 999) / 1000;
     }
 
     private boolean hasVotePermission(Player player, VoteCategory category, String option) {
