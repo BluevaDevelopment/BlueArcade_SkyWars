@@ -306,13 +306,15 @@ public class SkyWarsVoteService {
                 return true;
             }
 
+            String previousVote = voteState.getPlayerVote(player.getUniqueId(), category);
             voteState.castVote(player.getUniqueId(), category, option);
             voteCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
-            String message = voteBroadcastMessage(player, category, option, voteState);
-            if (message.isBlank()) {
-                return true;
+            if (!option.equals(previousVote)) {
+                String message = voteBroadcastMessage(player, category, option, voteState);
+                if (!message.isBlank()) {
+                    broadcastMessage(context, message);
+                }
             }
-            broadcastMessage(context, message);
             return true;
         }
 
@@ -368,9 +370,12 @@ public class SkyWarsVoteService {
                 return openMenuWithDefaults(player, waiting, new String[]{"menu", "main"});
             }
 
+            String previousVote = waiting.getPlayerVote(player.getUniqueId(), category);
             waiting.castVote(player.getUniqueId(), category, option);
             voteCooldowns.put(player.getUniqueId(), System.currentTimeMillis());
-            broadcastWaitingVote(player, category, option, waiting);
+            if (!option.equals(previousVote)) {
+                broadcastWaitingVote(player, category, option, waiting);
+            }
             return openMenuWithDefaults(player, waiting, new String[]{"menu", "main"});
         }
 
