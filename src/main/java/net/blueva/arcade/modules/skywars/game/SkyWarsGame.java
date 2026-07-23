@@ -44,6 +44,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -104,7 +105,6 @@ public class SkyWarsGame {
             state.setVoteState(voteService.createVoteState());
             voteService.applyPendingVotes(state, context.getPlayers());
         }
-        state.setTrackedChests(lootService.loadChests(context));
         state.setScheduledEvents(scheduledEvents);
 
         loadTeamSpawns(context, state);
@@ -401,8 +401,6 @@ public class SkyWarsGame {
         }
 
         startGameTimer(context, state);
-        lootService.startChestMarkers(context, state);
-        lootService.prefillChests(context, state);
         lootService.startChestRefills(context, state);
         context.getSchedulerAPI().cancelTask("arena_" + context.getArenaId() + "_skywars_cage_guard");
         spawnCageService.removeCages(context, state);
@@ -592,6 +590,50 @@ public class SkyWarsGame {
             return;
         }
         lootService.handleChestLoot(context, state, player, block);
+    }
+
+    public boolean handleChestBreak(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                    Player player,
+                                    org.bukkit.block.Block block) {
+        ArenaState state = getArenaState(context);
+        if (state == null) {
+            return false;
+        }
+        return lootService.handleChestBreak(context, state, player, block);
+    }
+
+    /**
+     * Handles chests destroyed by an explosion (TNT, creepers, ...). Each affected chest is
+     * registered in memory and, if it still had loot, its items are dropped the same way as
+     * when a player breaks it.
+     */
+    public void handleChestExplosion(List<org.bukkit.block.Block> blocks) {
+        if (blocks == null || blocks.isEmpty()) {
+            return;
+        }
+
+        for (ArenaState state : arenas.values()) {
+            GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context = state.getContext();
+            if (context == null || context.getPhase() != GamePhase.PLAYING) {
+                continue;
+            }
+
+            Iterator<org.bukkit.block.Block> iterator = blocks.iterator();
+            while (iterator.hasNext()) {
+                org.bukkit.block.Block block = iterator.next();
+                Material type = block.getType();
+                if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.ENDER_CHEST) {
+                    continue;
+                }
+                if (!context.isInsideBounds(block.getLocation())) {
+                    continue;
+                }
+                if (lootService.handleChestBreak(context, state, null, block)) {
+                    // Loot was dropped and the block removed by the loot service
+                    iterator.remove();
+                }
+            }
+        }
     }
 
     public void endGame(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {

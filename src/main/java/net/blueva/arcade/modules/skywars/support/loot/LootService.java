@@ -59,10 +59,7 @@ public class LootService {
             return;
         }
 
-        if (!state.isTrackedChest(block.getLocation())
-                && !moduleConfig.getBoolean("loot.chests.allow_untracked", false)) {
-            return;
-        }
+        state.trackChest(block.getLocation(), blockType);
 
         long now = System.currentTimeMillis();
         if (!state.shouldRefillChest(block.getLocation(), now)) {
@@ -94,25 +91,70 @@ public class LootService {
         }
     }
 
-    public List<TrackedChest> loadChests(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context) {
-        if (context == null || context.getDataAccess() == null) {
-            return List.of();
+    /**
+     * Handles a player breaking a chest. The chest is registered in memory so it can be
+     * restored later, and its loot is dropped on the ground if it had not been looted yet.
+     *
+     * @return true if the break was fully handled here (loot dropped, block removed) and the event should be cancelled
+     */
+    public boolean handleChestBreak(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
+                                    ArenaState state,
+                                    Player player,
+                                    Block block) {
+        if (block == null || state == null) {
+            return false;
         }
 
-        World arenaWorld = context.getArenaAPI() != null ? context.getArenaAPI().getWorld() : null;
-        List<String> entries = context.getDataAccess().getGameData("loot.chests.locations", List.class);
-        if (entries == null || entries.isEmpty()) {
-            return List.of();
+        Material blockType = block.getType();
+        boolean isChest = blockType == Material.CHEST
+                || blockType == Material.TRAPPED_CHEST
+                || blockType == Material.ENDER_CHEST;
+        if (!isChest) {
+            return false;
         }
 
-        List<TrackedChest> chests = new ArrayList<>();
-        for (String entry : entries) {
-            TrackedChest trackedChest = parseTrackedChest(entry, arenaWorld);
-            if (trackedChest != null) {
-                chests.add(trackedChest);
+        state.trackChest(block.getLocation(), blockType);
+
+        long now = System.currentTimeMillis();
+        if (!state.shouldRefillChest(block.getLocation(), now)) {
+            // Already looted: let the vanilla break drop the stored contents
+            return false;
+        }
+
+        List<LootEntry> entries = parseEntries(state);
+        if (entries.isEmpty()) {
+            return false;
+        }
+
+        int minItems = resolveMinItems(state);
+        int maxItems = resolveMaxItems(state);
+        int itemCount = ThreadLocalRandom.current().nextInt(Math.max(1, minItems), Math.max(minItems, maxItems) + 1);
+
+        Location dropLocation = block.getLocation().add(0.5, 0.5, 0.5);
+        block.setType(Material.AIR);
+        block.getWorld().spawnParticle(Particle.FLAME,
+                dropLocation, 20, 0.4, 0.4, 0.4, 0.01);
+
+        for (int i = 0; i < itemCount; i++) {
+            LootEntry entry = pickEntry(entries);
+            if (entry == null) {
+                continue;
             }
+            int amount = entry.minAmount == entry.maxAmount
+                    ? entry.minAmount
+                    : ThreadLocalRandom.current().nextInt(entry.minAmount, entry.maxAmount + 1);
+            ItemStack itemStack = new ItemStack(entry.material, Math.max(1, amount));
+            applyEnchantments(itemStack, entry.enchantments);
+            block.getWorld().dropItemNaturally(dropLocation, itemStack);
         }
-        return chests;
+
+        long nextRefillAt = resolveNextRefillAt(now);
+        state.markChestRefill(block.getLocation(), nextRefillAt);
+
+        if (statsAPI != null && player != null) {
+            statsAPI.addModuleStat(player, moduleInfo.getId(), "chests_looted", 1);
+        }
+        return true;
     }
 
     public void restoreChests(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
@@ -134,71 +176,6 @@ public class LootService {
         }
     }
 
-    public void prefillChests(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
-                              ArenaState state) {
-        if (context == null || state == null) {
-            return;
-        }
-        if (!moduleConfig.getBoolean("loot.refill.prefill_on_start", true)) {
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        for (TrackedChest chest : state.getTrackedChests()) {
-            if (chest == null || chest.getLocation() == null) {
-                continue;
-            }
-            Block block = chest.getLocation().getBlock();
-            Material blockType = block.getType();
-            if (blockType != Material.CHEST && blockType != Material.TRAPPED_CHEST && blockType != Material.ENDER_CHEST) {
-                continue;
-            }
-            List<LootEntry> entries = parseEntries(state);
-            if (entries.isEmpty()) {
-                continue;
-            }
-            int minItems = resolveMinItems(state);
-            int maxItems = resolveMaxItems(state);
-            int itemCount = ThreadLocalRandom.current().nextInt(Math.max(1, minItems), Math.max(minItems, maxItems) + 1);
-            if (fillChest(block, entries, itemCount)) {
-                long nextRefillAt = resolveNextRefillAt(now);
-                state.markChestRefill(chest.getLocation(), nextRefillAt);
-            }
-        }
-    }
-
-    public void startChestMarkers(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
-                                  ArenaState state) {
-        if (context == null || state == null) {
-            return;
-        }
-
-        int arenaId = context.getArenaId();
-        String taskId = "arena_" + arenaId + "_skywars_chest_markers";
-        int intervalTicks = Math.max(20, moduleConfig.getInt("loot.chests.marker_interval_ticks", 40));
-
-        context.getSchedulerAPI().runTimer(taskId, () -> {
-            for (TrackedChest chest : state.getTrackedChests()) {
-                Location location = chest.getLocation();
-                if (location == null || location.getWorld() == null) {
-                    continue;
-                }
-                Material currentType = location.getBlock().getType();
-                if (currentType != Material.CHEST
-                        && currentType != Material.TRAPPED_CHEST
-                        && currentType != Material.ENDER_CHEST) {
-                    continue;
-                }
-
-                Location particleLocation = location.clone().add(0.5, 1.1, 0.5);
-                Particle particle = currentType == Material.ENDER_CHEST
-                        ? Particle.PORTAL
-                        : happyVillagerParticle();
-                location.getWorld().spawnParticle(particle, particleLocation, 6, 0.2, 0.3, 0.2, 0.01);
-            }
-        }, 20L, intervalTicks);
-    }
-
     public void startChestRefills(GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context,
                                   ArenaState state) {
         if (context == null || state == null) {
@@ -217,28 +194,10 @@ public class LootService {
         context.getSchedulerAPI().runTimer(taskId, () -> {
             long now = System.currentTimeMillis();
             for (TrackedChest chest : state.getTrackedChests()) {
-                if (chest == null || chest.getLocation() == null) {
-                    continue;
-                }
                 if (!state.shouldRefillChest(chest.getLocation(), now)) {
                     continue;
                 }
-                Block block = chest.getLocation().getBlock();
-                Material blockType = block.getType();
-                if (blockType != Material.CHEST && blockType != Material.TRAPPED_CHEST && blockType != Material.ENDER_CHEST) {
-                    continue;
-                }
-                List<LootEntry> entries = parseEntries(state);
-                if (entries.isEmpty()) {
-                    continue;
-                }
-                int minItems = resolveMinItems(state);
-                int maxItems = resolveMaxItems(state);
-                int itemCount = ThreadLocalRandom.current().nextInt(Math.max(1, minItems), Math.max(minItems, maxItems) + 1);
-                if (fillChest(block, entries, itemCount)) {
-                    long nextRefillAt = resolveNextRefillAt(now);
-                    state.markChestRefill(chest.getLocation(), nextRefillAt);
-                }
+                refillTrackedChest(state, chest, now);
             }
         }, checkInterval, checkInterval);
     }
@@ -251,25 +210,34 @@ public class LootService {
 
         long now = System.currentTimeMillis();
         for (TrackedChest chest : state.getTrackedChests()) {
-            if (chest == null || chest.getLocation() == null) {
-                continue;
-            }
-            Block block = chest.getLocation().getBlock();
-            Material blockType = block.getType();
-            if (blockType != Material.CHEST && blockType != Material.TRAPPED_CHEST && blockType != Material.ENDER_CHEST) {
-                continue;
-            }
-            List<LootEntry> entries = parseEntries(state);
-            if (entries.isEmpty()) {
-                continue;
-            }
-            int minItems = resolveMinItems(state);
-            int maxItems = resolveMaxItems(state);
-            int itemCount = ThreadLocalRandom.current().nextInt(Math.max(1, minItems), Math.max(minItems, maxItems) + 1);
-            if (fillChest(block, entries, itemCount)) {
-                long nextRefillAt = resolveNextRefillAt(now);
-                state.markChestRefill(chest.getLocation(), nextRefillAt);
-            }
+            refillTrackedChest(state, chest, now);
+        }
+    }
+
+    private void refillTrackedChest(ArenaState state, TrackedChest chest, long now) {
+        if (chest == null || chest.getLocation() == null) {
+            return;
+        }
+        Block block = chest.getLocation().getBlock();
+        Material blockType = block.getType();
+        if (blockType == Material.AIR) {
+            // The chest was broken during the game: regenerate it before refilling
+            block.setType(chest.getMaterial());
+            blockType = block.getType();
+        }
+        if (blockType != Material.CHEST && blockType != Material.TRAPPED_CHEST && blockType != Material.ENDER_CHEST) {
+            return;
+        }
+        List<LootEntry> entries = parseEntries(state);
+        if (entries.isEmpty()) {
+            return;
+        }
+        int minItems = resolveMinItems(state);
+        int maxItems = resolveMaxItems(state);
+        int itemCount = ThreadLocalRandom.current().nextInt(Math.max(1, minItems), Math.max(minItems, maxItems) + 1);
+        if (fillChest(block, entries, itemCount)) {
+            long nextRefillAt = resolveNextRefillAt(now);
+            state.markChestRefill(chest.getLocation(), nextRefillAt);
         }
     }
 
@@ -445,45 +413,6 @@ public class LootService {
         return moduleConfig.getInt("loot.chests.item_count.max", 6);
     }
 
-    private TrackedChest parseTrackedChest(String entry, World fallbackWorld) {
-        if (entry == null || entry.isEmpty()) {
-            return null;
-        }
-
-        String[] parts = entry.split(":");
-        if (parts.length < 4) {
-            return null;
-        }
-
-        String worldName = parts[0];
-        try {
-            int x = Integer.parseInt(parts[1]);
-            int y = Integer.parseInt(parts[2]);
-            int z = Integer.parseInt(parts[3]);
-            Material material = Material.CHEST;
-            if (parts.length >= 5) {
-                material = Material.valueOf(parts[4].toUpperCase(Locale.ROOT));
-            }
-            if (material != Material.CHEST
-                    && material != Material.TRAPPED_CHEST
-                    && material != Material.ENDER_CHEST) {
-                material = Material.CHEST;
-            }
-
-            World world = org.bukkit.Bukkit.getWorld(worldName);
-            if (world == null) {
-                world = fallbackWorld;
-            }
-            if (world == null) {
-                return null;
-            }
-            Location location = new Location(world, x, y, z);
-            return new TrackedChest(location, material);
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
     private LootEntry pickEntry(List<LootEntry> entries) {
         if (entries.isEmpty()) {
             return null;
@@ -501,14 +430,6 @@ public class LootService {
             }
         }
         return entries.get(entries.size() - 1);
-    }
-
-    private Particle happyVillagerParticle() {
-        try {
-            return Particle.valueOf("HAPPY_VILLAGER");
-        } catch (IllegalArgumentException ignored) {
-            return Particle.VILLAGER_HAPPY;
-        }
     }
 
     private static class LootEntry {

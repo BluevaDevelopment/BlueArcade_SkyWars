@@ -25,13 +25,12 @@ public class ArenaState {
     private final GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context;
     private final Map<UUID, Integer> playerKills = new ConcurrentHashMap<>();
     private final Map<String, Long> chestRefillTimes = new ConcurrentHashMap<>();
-    private final Set<String> trackedChestKeys = ConcurrentHashMap.newKeySet();
+    private final Map<String, TrackedChest> trackedChests = new ConcurrentHashMap<>();
     private final Map<String, Material> cageBlocks = new ConcurrentHashMap<>();
     private final Set<UUID> cagedPlayers = ConcurrentHashMap.newKeySet();
     private final Set<String> cagedSpawnKeys = ConcurrentHashMap.newKeySet();
     private final Map<UUID, Long> fallProtectionUntil = new ConcurrentHashMap<>();
     private final Map<String, Location> teamSpawns = new ConcurrentHashMap<>();
-    private List<TrackedChest> trackedChests = new ArrayList<>();
     private List<ScheduledEvent> scheduledEvents = new ArrayList<>();
     private int nextEventIndex;
 
@@ -128,30 +127,22 @@ public class ArenaState {
         return nextRefill == null || now >= nextRefill;
     }
 
-    public void setTrackedChests(List<TrackedChest> trackedChests) {
-        if (trackedChests == null) {
-            this.trackedChests = new ArrayList<>();
-            trackedChestKeys.clear();
+    public void trackChest(Location location, Material material) {
+        if (location == null || material == null) {
             return;
         }
-        this.trackedChests = new ArrayList<>(trackedChests);
-        trackedChestKeys.clear();
-        for (TrackedChest chest : trackedChests) {
-            if (chest != null && chest.getLocation() != null) {
-                trackedChestKeys.add(toKey(chest.getLocation()));
-            }
-        }
+        trackedChests.putIfAbsent(toKey(location), new TrackedChest(location, material));
     }
 
     public List<TrackedChest> getTrackedChests() {
-        return List.copyOf(trackedChests);
+        return List.copyOf(trackedChests.values());
     }
 
     public boolean isTrackedChest(Location location) {
         if (location == null) {
             return false;
         }
-        return trackedChestKeys.contains(toKey(location));
+        return trackedChests.containsKey(toKey(location));
     }
 
     public Map<String, Long> getChestRefillTimes() {

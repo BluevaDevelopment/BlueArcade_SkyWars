@@ -171,11 +171,6 @@ setup_messages:
     all_slots_filled: "{prefix} <red>All {count} team spawn slots are already filled.</red>"
     set: "{prefix} <green>Team spawn set for team <white>{team}</white> at your current location.</green>"
     removed: "{prefix} <yellow>Team spawn removed for team <white>{team}</white>.</yellow>"
-  search_chests:
-    missing_bounds: "{prefix} <red>Game bounds are not configured yet.</red>"
-    start: "{prefix} <yellow>Searching for chests... ({blocks} blocks to scan)</yellow>"
-    action_bar: "<gold>Searching chests</gold> <gray>(Time elapsed: {time})</gray> <dark_gray>•</dark_gray> <green>{found}</green>"
-    complete: "{prefix} <green>Chest search completed.</green> <yellow>Found {found} chests in {time}.</yellow>"
   region:
     usage: "{prefix} <red>Usage:</red> <yellow>/baa game <id> skywars region <set|clear></yellow>"
     must_use_stick: "{prefix} <red>Select two corners with the setup tool first.</red>"

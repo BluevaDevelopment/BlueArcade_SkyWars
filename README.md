@@ -48,7 +48,6 @@ Finish the setup with the commands below:
 - `/baa game [arena_id] skywars team spawn add` — Add a spawn point to the next free slot (run once per team).
 - `/baa game [arena_id] skywars team spawn set <team_id>` — Overwrite the spawn point for a specific team (1, 2, ..., N).
 - `/baa game [arena_id] skywars team spawn remove <team_id>` — Remove the spawn point for a specific team (1, 2, ..., N).
-- `/baa game [arena_id] skywars searchchests` — Scan the arena bounds and store chest locations.
 - `/baa game [arena_id] skywars region set` — Select and save the regeneration region.
 
 ## Vote permissions

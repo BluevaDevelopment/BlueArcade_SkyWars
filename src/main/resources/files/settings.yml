@@ -80,11 +80,8 @@ loot:
   refill:
     enabled: true
     interval_seconds: 0
-    prefill_on_start: true
     check_interval_ticks: 20
   chests:
-    allow_untracked: false
-    marker_interval_ticks: 40
     # Per-item weights for loot selection.
     # Format per entry: MATERIAL:AMOUNT:WEIGHT or MATERIAL:MIN_AMOUNT:MAX_AMOUNT:WEIGHT
     # Optional enchantments: append |ENCHANT:LEVEL,ENCHANT:LEVEL (example: DIAMOND_SWORD:1:20|SHARPNESS:2,UNBREAKING:1)
