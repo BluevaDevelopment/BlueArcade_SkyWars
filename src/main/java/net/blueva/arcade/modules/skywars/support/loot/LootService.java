@@ -59,6 +59,11 @@ public class LootService {
             return;
         }
 
+        // Chests placed by players are plain vanilla chests: no loot, no tracking
+        if (state.isPlayerPlacedChest(block.getLocation())) {
+            return;
+        }
+
         state.trackChest(block.getLocation(), blockType);
 
         long now = System.currentTimeMillis();
@@ -110,6 +115,11 @@ public class LootService {
                 || blockType == Material.TRAPPED_CHEST
                 || blockType == Material.ENDER_CHEST;
         if (!isChest) {
+            return false;
+        }
+
+        // Chests placed by players are plain vanilla chests: no loot, no tracking
+        if (state.isPlayerPlacedChest(block.getLocation())) {
             return false;
         }
 

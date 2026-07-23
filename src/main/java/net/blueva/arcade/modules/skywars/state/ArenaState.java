@@ -26,6 +26,7 @@ public class ArenaState {
     private final Map<UUID, Integer> playerKills = new ConcurrentHashMap<>();
     private final Map<String, Long> chestRefillTimes = new ConcurrentHashMap<>();
     private final Map<String, TrackedChest> trackedChests = new ConcurrentHashMap<>();
+    private final Set<String> playerPlacedChestKeys = ConcurrentHashMap.newKeySet();
     private final Map<String, Material> cageBlocks = new ConcurrentHashMap<>();
     private final Set<UUID> cagedPlayers = ConcurrentHashMap.newKeySet();
     private final Set<String> cagedSpawnKeys = ConcurrentHashMap.newKeySet();
@@ -143,6 +144,16 @@ public class ArenaState {
             return false;
         }
         return trackedChests.containsKey(toKey(location));
+    }
+
+    public void markPlayerPlacedChest(Location location) {
+        if (location != null) {
+            playerPlacedChestKeys.add(toKey(location));
+        }
+    }
+
+    public boolean isPlayerPlacedChest(Location location) {
+        return location != null && playerPlacedChestKeys.contains(toKey(location));
     }
 
     public Map<String, Long> getChestRefillTimes() {

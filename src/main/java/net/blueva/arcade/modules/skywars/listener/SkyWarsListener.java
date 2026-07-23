@@ -133,6 +133,15 @@ public class SkyWarsListener implements Listener {
 
         if (!context.isInsideBounds(event.getBlock().getLocation())) {
             event.setCancelled(true);
+            return;
+        }
+
+        Material type = event.getBlock().getType();
+        if (type == Material.CHEST || type == Material.TRAPPED_CHEST || type == Material.ENDER_CHEST) {
+            ArenaState state = game.getArenaState(context);
+            if (state != null) {
+                state.markPlayerPlacedChest(event.getBlock().getLocation());
+            }
         }
     }
 
