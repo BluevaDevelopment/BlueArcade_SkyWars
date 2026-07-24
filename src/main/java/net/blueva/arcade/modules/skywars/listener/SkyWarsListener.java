@@ -108,11 +108,23 @@ public class SkyWarsListener implements Listener {
             return;
         }
 
+        ArenaState state = game.getArenaState(context);
+        if (game.getModuleConfig().getBoolean("block_rules.break_only_player_placed", false)
+                && (state == null || !state.isPlayerPlacedBlock(event.getBlock().getLocation()))) {
+            event.setCancelled(true);
+            return;
+        }
+
         Material type = event.getBlock().getType();
         if (type == Material.CHEST || type == Material.TRAPPED_CHEST || type == Material.ENDER_CHEST) {
             if (game.handleChestBreak(context, player, event.getBlock())) {
                 event.setCancelled(true);
+                return;
             }
+        }
+
+        if (state != null) {
+            state.untrackPlacedBlock(event.getBlock().getLocation());
         }
     }
 
@@ -136,12 +148,9 @@ public class SkyWarsListener implements Listener {
             return;
         }
 
-        Material type = event.getBlock().getType();
-        if (type == Material.CHEST || type == Material.TRAPPED_CHEST || type == Material.ENDER_CHEST) {
-            ArenaState state = game.getArenaState(context);
-            if (state != null) {
-                state.markPlayerPlacedChest(event.getBlock().getLocation());
-            }
+        ArenaState state = game.getArenaState(context);
+        if (state != null) {
+            state.trackPlacedBlock(event.getBlock().getLocation());
         }
     }
 

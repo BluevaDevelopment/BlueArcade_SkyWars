@@ -612,6 +612,7 @@ public class SkyWarsGame {
             return;
         }
 
+        boolean breakOnlyPlaced = moduleConfig.getBoolean("block_rules.break_only_player_placed", false);
         for (ArenaState state : arenas.values()) {
             GameContext<Player, Location, World, Material, ItemStack, Sound, Block, Entity> context = state.getContext();
             if (context == null || context.getPhase() != GamePhase.PLAYING) {
@@ -621,6 +622,14 @@ public class SkyWarsGame {
             Iterator<org.bukkit.block.Block> iterator = blocks.iterator();
             while (iterator.hasNext()) {
                 org.bukkit.block.Block block = iterator.next();
+                if (breakOnlyPlaced && context.isInsideBounds(block.getLocation())) {
+                    if (state.isPlayerPlacedBlock(block.getLocation())) {
+                        state.untrackPlacedBlock(block.getLocation());
+                    } else {
+                        iterator.remove();
+                        continue;
+                    }
+                }
                 Material type = block.getType();
                 if (type != Material.CHEST && type != Material.TRAPPED_CHEST && type != Material.ENDER_CHEST) {
                     continue;
@@ -629,7 +638,6 @@ public class SkyWarsGame {
                     continue;
                 }
                 if (lootService.handleChestBreak(context, state, null, block)) {
-                    // Loot was dropped and the block removed by the loot service
                     iterator.remove();
                 }
             }
