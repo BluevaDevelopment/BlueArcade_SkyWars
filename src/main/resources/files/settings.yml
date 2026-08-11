@@ -43,6 +43,11 @@ spawn_protection:
   # Seconds of fall damage immunity after the game starts
   fall_damage_seconds: 5
 
+kills:
+  # Time window (in ticks) to credit a killer after hitting a player, so knocking someone
+  # into the void still counts as a kill. 20 ticks = 1 second.
+  credit_window_ticks: 200
+
 combat:
   kill_regeneration:
     # Health restored on eliminations (set to 0 to disable)
