@@ -2,7 +2,8 @@ name: SkyWars
 id: skywars
 version: ${revision}
 type: MINIGAME
-api-version: 3.4
+api-version: 3.5
+game-version: "1.16"
 main: net.blueva.arcade.modules.skywars.SkyWarsModule
 
 authors:
